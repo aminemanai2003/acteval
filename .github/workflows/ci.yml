@@ -36,4 +36,4 @@ jobs:
       - run: >-
           python -c "import acteval as ae;
           assert ae.rmse([1, 2], [1, 2]) == 0;
-          assert ae.__version__ == '0.2.0'"
+          assert ae.__version__ == '0.3.0'"

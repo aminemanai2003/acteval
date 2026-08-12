@@ -70,3 +70,23 @@ specification and metric-specific ranking rules as point predictions.
 Empirical draws do not define log density or entropy. The Tweedie adapter does
 not define log density or entropy; callers can still use sample-based CRPS and
 Monte Carlo interval/event diagnostics.
+
+## Decision-aware results
+
+`DecisionEvaluation` contains model financial loss, benchmark financial loss,
+absolute regret, optional relative regret, and benchmark/loss metadata.
+
+- `pricing_regret()` uses explicit asymmetric costs of underpricing and
+  overpricing.
+- `loss_ratio_impact()` returns the realized aggregate ratio and its signed and
+  absolute displacement from a caller-selected target.
+- `reserve_shortfall()` and `capital_shortfall()` report aggregate, mean,
+  frequency, and conditional-mean insufficiency.
+- `select_reinsurance_option()` selects among immutable `ReinsuranceOption`
+  quotes under a documented projected cost.
+- `reinsurance_decision_regret()` compares realized
+  `premium + min(loss, retention)` costs to a named option.
+
+`decision_regret()` is the low-level extension point. Callers provide a loss
+function returning finite nonnegative financial loss per observation. Regret
+can be negative and is never interpreted across different loss functions.

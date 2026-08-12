@@ -1,6 +1,16 @@
 # Changelog
 
-## 0.2.0 - Unreleased
+## 0.3.0 - Unreleased
+
+- Added generic benchmarked financial decision regret.
+- Added premium decisions, asymmetric pricing regret, and loss-ratio impact.
+- Added reserve and capital shortfall amount/frequency diagnostics.
+- Added distribution quantile decisions.
+- Added quoted stop-loss reinsurance option selection under explicit
+  premium, retained-loss, and capital-cost assumptions.
+- Added realized reinsurance decision regret against a named option.
+
+## 0.2.0 - 2026-08-12
 
 - Added vectorized Poisson, Negative Binomial, Gamma, Lognormal, empirical,
   and compound Poisson-Gamma Tweedie predictive distributions.
