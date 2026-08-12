@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.3.0 - Unreleased
+## 0.3.0 - 2026-08-12
 
 - Added generic benchmarked financial decision regret.
 - Added premium decisions, asymmetric pricing regret, and loss-ratio impact.
