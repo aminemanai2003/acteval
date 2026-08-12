@@ -17,14 +17,14 @@ jobs:
         python-version: ["3.11", "3.12", "3.13"]
 
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
       - run: python -m pip install --upgrade pip
       - run: python -m pip install -e ".[test]"
       - run: ruff check .
-      - run: mypy src/acteval
+      - run: mypy --python-version "${{ matrix.python-version }}" src/acteval
       - run: pytest
       - run: python -m build
