@@ -1,5 +1,6 @@
 """ActEval: evaluation tools for actuarial predictive models."""
 
+from acteval._version import __version__
 from acteval.api import (
     compare,
     compare_distributions,
@@ -30,6 +31,18 @@ from acteval.distributions import (
     NegativeBinomialDistribution,
     PoissonDistribution,
     TweedieDistribution,
+)
+from acteval.inference import (
+    BootstrapEvaluationResult,
+    CalibrationIntervalBin,
+    CalibrationIntervalTable,
+    ConfidenceInterval,
+    PairedComparisonResult,
+    PairedMetricComparison,
+    bootstrap_calibration_by_quantile,
+    bootstrap_evaluate,
+    paired_bootstrap_compare,
+    save_interval_csv,
 )
 from acteval.metrics import (
     ae_ratio,
@@ -64,6 +77,17 @@ from acteval.metrics import (
     tweedie_deviance,
     weighted_calibration_error,
 )
+from acteval.monitoring import (
+    DriftBin,
+    PredictionDriftResult,
+    SegmentComparisonResult,
+    SegmentEvaluationResult,
+    TemporalEvaluationResult,
+    compare_by_segment,
+    evaluate_by_segment,
+    evaluate_over_time,
+    prediction_drift,
+)
 from acteval.plotting import (
     plot_calibration,
     plot_lift,
@@ -71,6 +95,12 @@ from acteval.plotting import (
     plot_tail_diagnostics,
 )
 from acteval.registry import MetricDefinition, get_metric, list_metrics
+from acteval.reporting import (
+    export_table,
+    render_html_report,
+    save_html_report,
+    save_plot,
+)
 from acteval.reports import (
     CalibrationTable,
     ComparisonResult,
@@ -81,9 +111,14 @@ from acteval.tasks import TaskDefinition, get_task_definition
 from acteval.types import MetricSpec, PredictiveDistribution, Task
 
 __all__ = [
+    "BootstrapEvaluationResult",
+    "CalibrationIntervalBin",
+    "CalibrationIntervalTable",
     "CalibrationTable",
     "ComparisonResult",
+    "ConfidenceInterval",
     "DecisionEvaluation",
+    "DriftBin",
     "EmpiricalDistribution",
     "EvaluationResult",
     "GammaDistribution",
@@ -93,21 +128,31 @@ __all__ = [
     "MetricDefinition",
     "MetricSpec",
     "NegativeBinomialDistribution",
+    "PairedComparisonResult",
+    "PairedMetricComparison",
     "PoissonDistribution",
+    "PredictionDriftResult",
     "PredictiveDistribution",
     "ReinsuranceOption",
     "ReinsuranceSelection",
+    "SegmentComparisonResult",
+    "SegmentEvaluationResult",
     "ShortfallResult",
     "Task",
     "TaskDefinition",
+    "TemporalEvaluationResult",
     "TweedieDistribution",
+    "__version__",
     "ae_ratio",
     "asymmetric_absolute_loss",
+    "bootstrap_calibration_by_quantile",
+    "bootstrap_evaluate",
     "brier_score",
     "calibration_by_quantile",
     "capital_shortfall",
     "central_prediction_interval",
     "compare",
+    "compare_by_segment",
     "compare_distributions",
     "crps",
     "decision_regret",
@@ -116,7 +161,10 @@ __all__ = [
     "distribution_interval_width",
     "distribution_quantile_score",
     "evaluate",
+    "evaluate_by_segment",
     "evaluate_distribution",
+    "evaluate_over_time",
+    "export_table",
     "gamma_deviance",
     "get_metric",
     "get_task_definition",
@@ -131,11 +179,13 @@ __all__ = [
     "mae",
     "mean_interval_width",
     "normalized_gini",
+    "paired_bootstrap_compare",
     "plot_calibration",
     "plot_lift",
     "plot_residuals",
     "plot_tail_diagnostics",
     "poisson_deviance",
+    "prediction_drift",
     "prediction_interval_coverage",
     "predictive_entropy",
     "predictive_variance",
@@ -144,9 +194,13 @@ __all__ = [
     "quantile_decision",
     "quantile_score",
     "reinsurance_decision_regret",
+    "render_html_report",
     "reserve_shortfall",
     "risk_group_lift",
     "rmse",
+    "save_html_report",
+    "save_interval_csv",
+    "save_plot",
     "select_reinsurance_option",
     "tail_ae_ratio",
     "tail_mae",
@@ -154,5 +208,3 @@ __all__ = [
     "tweedie_deviance",
     "weighted_calibration_error",
 ]
-
-__version__ = "0.3.0"

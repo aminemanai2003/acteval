@@ -2,6 +2,7 @@
 
 from copy import deepcopy
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 from acteval.types import Task
@@ -46,3 +47,17 @@ class EvaluationResult:
     def summary(self) -> str:
         """Return a concise printable metric table."""
         return str(self.to_dataframe().to_string())
+
+    def to_html(self, *, title: str = "ActEval evaluation") -> str:
+        """Render this result as a standalone HTML report."""
+
+        from acteval.reporting import render_html_report
+
+        return render_html_report(self, title=title)
+
+    def save_html(self, path: str | Path, *, title: str = "ActEval evaluation") -> Path:
+        """Write a standalone HTML report and return its resolved path."""
+
+        from acteval.reporting import save_html_report
+
+        return save_html_report(self, path, title=title)

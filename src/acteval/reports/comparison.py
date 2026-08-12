@@ -1,6 +1,7 @@
 """Multi-model evaluation result."""
 
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 from acteval.exceptions import InputValidationError
@@ -72,3 +73,19 @@ class ComparisonResult:
         ranking = ranking.reset_index(drop=True)
         ranking["rank"] = ranking.index + 1
         return ranking
+
+    def to_html(self, *, title: str = "ActEval model comparison") -> str:
+        """Render this comparison as a standalone HTML report."""
+
+        from acteval.reporting import render_html_report
+
+        return render_html_report(self, title=title)
+
+    def save_html(
+        self, path: str | Path, *, title: str = "ActEval model comparison"
+    ) -> Path:
+        """Write a standalone HTML report and return its resolved path."""
+
+        from acteval.reporting import save_html_report
+
+        return save_html_report(self, path, title=title)

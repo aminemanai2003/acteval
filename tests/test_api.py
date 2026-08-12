@@ -116,3 +116,25 @@ def test_evaluate_rejects_unsupported_and_duplicate_metrics() -> None:
 def test_compare_rejects_empty_predictions() -> None:
     with pytest.raises(InputValidationError, match="at least one model"):
         ae.compare([1, 2], {}, task="claim_frequency")
+
+
+def test_public_api_exports_are_resolvable_and_version_is_stable() -> None:
+    assert ae.__version__ == "1.0.0"
+    assert ae.__all__
+    assert len(ae.__all__) == len(set(ae.__all__))
+    assert all(hasattr(ae, name) for name in ae.__all__)
+
+
+def test_metric_signature_validation_is_cached(
+    frequency_data: tuple[np.ndarray, np.ndarray, np.ndarray],
+) -> None:
+    from acteval.api import _metric_signature
+
+    observed, predicted, _ = frequency_data
+    _metric_signature.cache_clear()
+    ae.evaluate(observed, predicted, task="claim_frequency", metrics=["rmse"])
+    first = _metric_signature.cache_info()
+    ae.evaluate(observed, predicted, task="claim_frequency", metrics=["rmse"])
+    second = _metric_signature.cache_info()
+    assert first.misses == 1
+    assert second.hits == first.hits + 1

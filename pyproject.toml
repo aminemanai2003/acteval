@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "acteval-insurance"
-version = "0.3.0"
+dynamic = ["version"]
 description = "Model-agnostic evaluation of actuarial predictive models"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -15,13 +15,14 @@ authors = [
 ]
 keywords = ["actuarial", "insurance", "model-evaluation", "calibration"]
 classifiers = [
-  "Development Status :: 3 - Alpha",
+  "Development Status :: 5 - Production/Stable",
   "Intended Audience :: Financial and Insurance Industry",
   "License :: OSI Approved :: Apache Software License",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
   "Typing :: Typed",
 ]
 dependencies = [
@@ -51,9 +52,14 @@ dev = [
 Homepage = "https://github.com/aminemanai2003/acteval"
 Repository = "https://github.com/aminemanai2003/acteval"
 Issues = "https://github.com/aminemanai2003/acteval/issues"
+Documentation = "https://github.com/aminemanai2003/acteval/tree/main/docs"
+Changelog = "https://github.com/aminemanai2003/acteval/blob/main/CHANGELOG.md"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/acteval"]
+
+[tool.hatch.version]
+path = "src/acteval/_version.py"
 
 [tool.pytest.ini_options]
 addopts = "--strict-config --strict-markers --cov=acteval --cov-report=term-missing --cov-fail-under=90"

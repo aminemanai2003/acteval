@@ -24,6 +24,18 @@ def test_decision_example_executes(capsys: object) -> None:
     assert "Reinsurance selection:" in output
 
 
+def test_inference_and_monitoring_example_executes(
+    capsys: object, tmp_path: Path, monkeypatch: object
+) -> None:
+    monkeypatch.chdir(tmp_path)  # type: ignore[attr-defined]
+    example = Path(__file__).parents[1] / "examples" / "inference_and_monitoring.py"
+    runpy.run_path(str(example), run_name="__main__")
+    output = capsys.readouterr().out  # type: ignore[attr-defined]
+    assert "objective_delta" not in output
+    assert "PSI=" in output
+    assert (tmp_path / "acteval-example-report.html").exists()
+
+
 def test_example_notebook_is_valid_notebook_json() -> None:
     notebook = json.loads(
         Path("examples/synthetic_frequency.ipynb").read_text(encoding="utf-8")

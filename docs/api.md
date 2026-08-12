@@ -93,3 +93,34 @@ absolute regret, optional relative regret, and benchmark/loss metadata.
 `decision_regret()` is the low-level extension point. Callers provide a loss
 function returning finite nonnegative financial loss per observation. Regret
 can be negative and is never interpreted across different loss functions.
+
+## Bootstrap inference
+
+- `bootstrap_evaluate()` returns point estimates and percentile confidence
+  intervals for selected metrics.
+- `paired_bootstrap_compare()` returns objective-aware paired differences
+  against a named reference model. Negative differences favor the candidate.
+- `bootstrap_calibration_by_quantile()` returns fixed-bin intervals for mean
+  prediction, mean observation, and A/E.
+
+All row-level arrays are resampled jointly. Seeds, attempts, rejected resamples,
+confidence levels, and sample counts are retained in metadata. See
+[`inference.md`](inference.md) for interpretation and limitations.
+
+## Segment and temporal monitoring
+
+- `evaluate_by_segment()` evaluates one model within caller-defined groups.
+- `compare_by_segment()` compares aligned models in every retained group.
+- `evaluate_over_time()` sorts period labels and reports changes from baseline.
+- `prediction_drift()` reports weighted reference-bin PSI and mean shifts.
+
+Monitoring is descriptive and does not apply universal materiality thresholds.
+See [`monitoring.md`](monitoring.md).
+
+## Reporting and exports
+
+`render_html_report()` and `save_html_report()` generate standalone documents.
+`export_table()` writes CSV, JSON, or HTML, and `save_plot()` exports the figure
+owned by a Matplotlib axis. `EvaluationResult` and `ComparisonResult` expose
+`to_html()` and `save_html()` convenience methods. See
+[`reporting.md`](reporting.md).

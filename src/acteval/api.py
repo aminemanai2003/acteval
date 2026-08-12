@@ -2,7 +2,8 @@
 
 import re
 from collections.abc import Mapping, Sequence
-from inspect import signature
+from functools import cache
+from inspect import Signature, signature
 from typing import Any
 
 from numpy.typing import ArrayLike
@@ -22,6 +23,13 @@ _DEFAULT_DISTRIBUTION_METRICS = (
     MetricSpec("interval_coverage", {"coverage": 0.9}, label="coverage_90"),
     MetricSpec("interval_width", {"coverage": 0.9}, label="interval_width_90"),
 )
+
+
+@cache
+def _metric_signature(function: Any) -> Signature:
+    """Cache call signatures used repeatedly by bootstrap and segment runs."""
+
+    return signature(function)
 
 
 def _parse_metric(selection: MetricSelection) -> MetricSpec:
@@ -80,7 +88,7 @@ def _evaluate_metric(
         **specification.parameters,
     }
     try:
-        signature(definition.function).bind(
+        _metric_signature(definition.function).bind(
             y_true,
             y_pred,
             **keyword_arguments,
@@ -235,7 +243,7 @@ def _evaluate_distribution_metric(
         **specification.parameters,
     }
     try:
-        signature(definition.function).bind(
+        _metric_signature(definition.function).bind(
             y_true,
             distribution,
             **keyword_arguments,
@@ -274,9 +282,9 @@ def evaluate_distribution(
     """Evaluate one predictive distribution per observation.
 
     The default report contains sample-approximated CRPS, predictive variance,
-    and 90% central-interval coverage and width. Log score and entropy are
-    opt-in because not every distribution adapter supplies validated density
-    or entropy methods.
+    and 90% central-interval coverage and width. Log score and entropy remain
+    opt-in because their interpretation depends on the distribution's base
+    measure and they do not share a universal optimization objective.
     """
     resolved_task = validate_task(task)
     validated = validate_inputs(
