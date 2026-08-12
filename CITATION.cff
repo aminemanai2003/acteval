@@ -1,0 +1,13 @@
+cff-version: 1.2.0
+message: "If you use ActEval in research, please cite this software."
+title: "ActEval: model-agnostic evaluation of actuarial predictive models"
+type: software
+authors:
+  - family-names: Manai
+    given-names: Amine
+    email: amine.manai@esprit.tn
+repository-code: "https://github.com/aminemanai2003/acteval"
+url: "https://pypi.org/project/acteval-insurance/"
+license: Apache-2.0
+version: 1.0.0
+date-released: 2026-08-12

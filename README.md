@@ -1,128 +1,108 @@
 # ActEval
 
-Evaluate actuarial predictive models beyond predictive accuracy.
+[![PyPI version](https://img.shields.io/pypi/v/acteval-insurance.svg)](https://pypi.org/project/acteval-insurance/)
+[![Python versions](https://img.shields.io/pypi/pyversions/acteval-insurance.svg)](https://pypi.org/project/acteval-insurance/)
+[![CI](https://github.com/aminemanai2003/acteval/actions/workflows/ci.yml/badge.svg)](https://github.com/aminemanai2003/acteval/actions/workflows/ci.yml)
+[![License](https://img.shields.io/pypi/l/acteval-insurance.svg)](https://github.com/aminemanai2003/acteval/blob/main/LICENSE)
+[![Typed](https://img.shields.io/badge/typing-typed-blue.svg)](https://peps.python.org/pep-0561/)
 
-ActEval is a model-agnostic Python framework for non-life insurance model
-evaluation. It accepts prediction arrays instead of fitted model objects, so it
-works after GLMs, scikit-learn pipelines, XGBoost, CatBoost, or neural networks.
+**Model-agnostic evaluation for actuarial predictive models.**
 
-ActEval reports accuracy, calibration, discrimination, and observed-tail
-behavior separately. It does not create an arbitrary overall score or claim
-that one model is universally best.
+ActEval evaluates prediction arrays—not fitted model objects—across accuracy,
+calibration, discrimination, probabilistic quality, uncertainty, observed-tail
+risk, and financial decisions. It works with outputs from GLMs, scikit-learn,
+XGBoost, CatBoost, neural networks, or any other modelling stack.
 
-Version 0.2 also evaluates full predictive distributions using proper scoring
-rules and keeps uncertainty diagnostics separate from model-quality claims.
-Version 0.3 adds explicit, benchmarked financial decision diagnostics without
-collapsing pricing, reserving, capital, and reinsurance into one score.
+The project is designed for non-life insurance pricing workflows. It keeps
+actuarial objectives separate and never creates an arbitrary universal model
+score.
+
+## Why ActEval?
+
+A model with lower RMSE can still have worse aggregate calibration, weaker
+large-loss behavior, or a less favorable pricing consequence. ActEval makes
+those trade-offs visible through explicit metrics and reproducible metadata.
+
+| Capability | Included diagnostics |
+|---|---|
+| Point predictions | MAE, RMSE, Poisson/Gamma/Tweedie deviance |
+| Calibration | A/E, calibration by risk quantile, weighted calibration error |
+| Discrimination | Gini, normalized Gini, lift |
+| Tail risk | Observed-tail MAE, RMSE, A/E, large-loss bias |
+| Predictive distributions | CRPS, log, Brier, quantile, and interval scores |
+| Uncertainty | Coverage, width, variance, entropy, bootstrap intervals |
+| Model comparison | Metric-specific ranking and paired bootstrap differences |
+| Monitoring | Segment reports, temporal validation, prediction drift/PSI |
+| Decisions | Pricing regret, loss ratio, reserve/capital shortfall, reinsurance |
+| Reporting | DataFrame, dictionary, CSV, JSON, HTML, and plot export |
 
 ## Installation
 
-Install the package from PyPI:
+ActEval requires Python 3.11 or newer.
 
 ```bash
 python -m pip install acteval-insurance
 ```
 
-For plots:
+Install the optional plotting support with:
 
 ```bash
 python -m pip install "acteval-insurance[plot]"
 ```
 
-The distribution is named `acteval-insurance` because `acteval` is occupied by
-an unrelated project on PyPI. The import name remains `acteval`.
+The distribution name is `acteval-insurance` because `acteval` was already
+occupied on PyPI. The import remains concise:
+
+```python
+import acteval as ae
+```
 
 ## Quick start
+
+ActEval accepts ordinary NumPy-compatible arrays and returns structured result
+objects.
 
 ```python
 import acteval as ae
 
+y_true = [0.0, 0.4, 1.0, 2.0, 4.0, 7.0]
+y_pred = [0.1, 0.5, 0.9, 1.8, 3.6, 6.4]
+exposure = [1.0, 0.5, 1.2, 0.8, 1.5, 2.0]
+
 result = ae.evaluate(
-    y_true=[0.0, 0.4, 1.0, 2.0, 4.0, 7.0],
-    y_pred=[0.1, 0.5, 0.9, 1.8, 3.6, 6.4],
-    exposure=[1.0, 0.5, 1.2, 0.8, 1.5, 2.0],
-    task="claim_frequency",
-    metrics=["rmse", "poisson_deviance", "ae_ratio", "normalized_gini"],
-)
-
-print(result.summary())
-```
-
-Task defaults provide a broader report, including 95% observed-tail metrics.
-
-## Model comparison
-
-```python
-comparison = ae.compare(
-    y_true=y,
-    predictions={
-        "GLM": glm_predictions,
-        "CatBoost": catboost_predictions,
-        "XGBoost": xgb_predictions,
-    },
+    y_true,
+    y_pred,
     exposure=exposure,
     task="claim_frequency",
 )
 
-print(comparison.to_dataframe())
-print(comparison.rank(metric="poisson_deviance"))
+print(result.to_dataframe())
 ```
 
-`rank()` uses a metric's documented direction. Target metrics such as A/E are
-ranked by distance from 1. Rankings remain metric-specific.
-
-## Accuracy can disagree with tail calibration
-
-The example below deliberately creates two models:
-
-- Model A makes moderate errors on many ordinary risks but predicts large
-  observed outcomes accurately.
-- Model B improves ordinary-risk predictions and overall RMSE while
-  underpredicting the observed tail.
-
-```python
-import numpy as np
-import acteval as ae
-
-y = np.r_[np.tile([0.5, 1.0, 1.5, 1.0, 0.5], 19), np.repeat(10.0, 5)]
-model_a = np.r_[y[:95] + 0.5, np.repeat(10.0, 5)]
-model_b = np.r_[y[:95], np.repeat(9.0, 5)]
-
-tradeoff = ae.compare(
-    y,
-    {"Model A": model_a, "Model B": model_b},
-    task="claim_frequency",
-    metrics=["rmse", "poisson_deviance", "tail_ae_95"],
-)
-print(tradeoff.to_dataframe())
-```
-
-Model B has lower overall RMSE and deviance, while Model A has tail A/E equal
-to 1. The appropriate choice depends on the actuarial objective.
-
-## Input and exposure contract
-
-`y_true` and `y_pred` must be finite, one-dimensional, nonnegative arrays on
-the same scale.
-
-- For claim frequency, use frequency rates for both arrays and provide policy
-  exposure as `exposure`.
-- For pure premium, use pure-premium rates for both arrays and provide exposure
-  when portfolio-volume weighting is desired.
-- For severity, use claim severities. Exposure is optional and usually
-  unnecessary; claim-level `sample_weight` is normally more meaningful.
-- If both are supplied, effective weight is `sample_weight * exposure`.
-
-ActEval does not silently convert raw claim counts into rates.
-
-## Parameterized metrics
-
-Use `MetricSpec` whenever a parameter should be explicit and reproducible:
+Task defaults provide a balanced report. Metrics can be selected explicitly:
 
 ```python
 result = ae.evaluate(
-    y,
-    predictions,
+    y_true,
+    y_pred,
+    task="claim_frequency",
+    metrics=[
+        "rmse",
+        "poisson_deviance",
+        "ae_ratio",
+        "normalized_gini",
+        "tail_ae_95",
+    ],
+)
+```
+
+Parameterized metrics use `MetricSpec`, keeping every assumption in result
+metadata:
+
+```python
+result = ae.evaluate(
+    y_true,
+    y_pred,
     task="pure_premium",
     metrics=[
         ae.MetricSpec("tweedie_deviance", {"power": 1.7}),
@@ -131,81 +111,135 @@ result = ae.evaluate(
 )
 ```
 
-Tail aliases such as `tail_mae_95`, `tail_rmse_99`, and `tail_ae_95` are also
-accepted. Parameter values are retained in result metadata.
-
-## Calibration, discrimination, and tail diagnostics
+## Compare models
 
 ```python
-calibration = ae.calibration_by_quantile(y, predictions, n_bins=10)
-lift = ae.lift_by_quantile(y, predictions, n_bins=10)
-
-print(calibration.to_dataframe())
-print(lift.to_dataframe())
-
-ae.plot_calibration(y, predictions)
-ae.plot_lift(y, predictions)
-ae.plot_residuals(y, predictions)
-ae.plot_tail_diagnostics(y, predictions, quantile=0.95)
-```
-
-## Predictive distributions
-
-Built-in vectorized adapters provide one predictive distribution per
-observation:
-
-- `PoissonDistribution(mu)`;
-- `NegativeBinomialDistribution(mean, dispersion)`;
-- `GammaDistribution(mean, shape)`;
-- `LognormalDistribution(meanlog, sdlog)`;
-- `EmpiricalDistribution(samples)`;
-- `TweedieDistribution(mean, power, dispersion)` for compound
-  Poisson-Gamma `1 < power < 2`.
-
-```python
-poisson = ae.PoissonDistribution(mu=poisson_means)
-negative_binomial = ae.NegativeBinomialDistribution(
-    mean=nb_means,
-    dispersion=nb_dispersion,
-)
-
-distribution_comparison = ae.compare_distributions(
-    y_true=claim_counts,
-    distributions={
-        "Poisson": poisson,
-        "Negative Binomial": negative_binomial,
+comparison = ae.compare(
+    y_true,
+    {
+        "GLM": glm_predictions,
+        "Gradient boosting": boosting_predictions,
     },
     exposure=exposure,
     task="claim_frequency",
-    metrics=[
-        ae.MetricSpec("crps", {"n_samples": 5000, "random_state": 42}),
-        "log_score",
-        ae.MetricSpec("brier_score", {"threshold": 0}),
-        ae.MetricSpec("interval_score", {"coverage": 0.9}),
-    ],
 )
 
-print(distribution_comparison.to_dataframe())
+print(comparison.to_dataframe())
+print(comparison.rank("poisson_deviance"))
+```
+
+Rankings are metric-specific. Target metrics such as A/E are ranked by distance
+from their target; ActEval does not declare one model universally best.
+
+## Quantify sampling uncertainty
+
+Version 1.0 includes the inference layer introduced for the v0.4 roadmap.
+Rows, predictions, exposures, and weights are resampled jointly.
+
+```python
+intervals = ae.bootstrap_evaluate(
+    y_true,
+    y_pred,
+    exposure=exposure,
+    task="claim_frequency",
+    metrics=["rmse", "ae_ratio", "normalized_gini", "tail_ae_95"],
+    n_resamples=2_000,
+    confidence_level=0.95,
+    random_state=42,
+)
+
+print(intervals.to_dataframe())
+```
+
+For model comparisons, paired resampling evaluates every model on the same
+bootstrap rows. Negative `objective_delta` favors the candidate model after
+accounting for whether a metric is minimized, maximized, or has a target.
+
+```python
+paired = ae.paired_bootstrap_compare(
+    y_true,
+    {"Current GLM": glm_predictions, "Candidate": boosting_predictions},
+    reference="Current GLM",
+    task="claim_frequency",
+    metrics=["poisson_deviance", "ae_ratio", "normalized_gini"],
+    n_resamples=2_000,
+    random_state=42,
+)
+```
+
+Confidence intervals are descriptive sampling-uncertainty estimates. Paired
+comparisons are not automatically adjusted for multiple testing.
+
+## Segment and temporal monitoring
+
+The v0.5 monitoring layer evaluates portfolio slices without changing the
+meaning of the underlying metrics.
+
+```python
+segments = ae.evaluate_by_segment(
+    y_true,
+    y_pred,
+    segment_labels,
+    task="claim_frequency",
+    exposure=exposure,
+    metrics=["ae_ratio", "normalized_gini", "tail_ae_95"],
+)
+
+timeline = ae.evaluate_over_time(
+    y_true,
+    y_pred,
+    accounting_period,
+    task="claim_frequency",
+    exposure=exposure,
+    metrics=["poisson_deviance", "ae_ratio"],
+)
+
+drift = ae.prediction_drift(
+    reference_predictions,
+    current_predictions,
+    n_bins=10,
+)
+```
+
+Prediction drift uses fixed, weighted reference-quantile bins and reports PSI
+contributions. ActEval intentionally applies no universal PSI alert threshold.
+
+## Predictive distributions
+
+Built-in vectorized adapters represent one predictive distribution per
+observation:
+
+- `PoissonDistribution(mu)`
+- `NegativeBinomialDistribution(mean, dispersion)`
+- `GammaDistribution(mean, shape)`
+- `LognormalDistribution(meanlog, sdlog)`
+- `TweedieDistribution(mean, power, dispersion)` for `1 < power < 2`
+- `EmpiricalDistribution(samples)` for joint or independent scenario draws
+
+```python
+poisson = ae.PoissonDistribution(mu=frequency_predictions)
+
+distribution_result = ae.evaluate_distribution(
+    claim_counts,
+    poisson,
+    task="claim_frequency",
+    exposure=exposure,
+    metrics=[
+        ae.MetricSpec("crps", {"n_samples": 5_000, "random_state": 42}),
+        "log_score",
+        ae.MetricSpec("interval_score", {"coverage": 0.90}),
+    ],
+)
 ```
 
 Samples have shape `(n_samples, n_observations)`. Scalar quantiles have shape
 `(n_observations,)`; vector quantiles have shape
-`(n_quantiles, n_observations)`. CRPS randomness is explicitly seeded and
-recorded in result metadata.
-
-Tweedie sampling uses the exact compound representation. CDF and log-density
-evaluation use a numerical series implementation; quantiles use deterministic
-Monte Carlo. Entropy is a seeded Monte Carlo estimate of `-E[log_prob(X)]` and
-is only comparable under the same mixed distribution measure. Empirical draws
-are treated as a discrete distribution: repeated values determine probability
-mass, and unseen values have log probability `-inf`.
+`(n_quantiles, n_observations)`.
 
 ## Decision-aware evaluation
 
-Decision functions always expose their financial loss and benchmark. Regret is
-`model financial loss - benchmark financial loss` in the loss function's unit.
-It may be negative when the model decision outperforms the benchmark. Relative
-regret is omitted when benchmark loss is zero.
+Financial decisions always expose their loss function and named benchmark.
+Regret is reported in the financial loss function's unit.
 
 ```python
 premiums = ae.premium_from_distribution(
@@ -222,78 +256,53 @@ pricing = ae.pricing_regret(
     overpricing_cost=1.0,
     benchmark_name="current tariff",
 )
-
-loss_ratio = ae.loss_ratio_impact(
-    realized_loss,
-    premiums,
-    target_loss_ratio=0.70,
-)
-
-reserve = ae.reserve_shortfall(realized_loss, held_reserve)
-capital = ae.capital_shortfall(realized_loss, available_capital)
 ```
 
-Stop-loss reinsurance selection compares quoted options under one explicit
-rule: premium plus expected retained aggregate loss plus a user-selected cost
-of VaR or expected-shortfall capital.
+ActEval also provides loss-ratio impact, reserve and capital shortfall, and
+quoted stop-loss reinsurance selection. These are explicit decision models,
+not interchangeable measures of predictive accuracy.
+
+## Reports and exports
+
+Result objects support DataFrames, dictionaries, printable summaries, and
+standalone HTML reports:
 
 ```python
-options = [
-    ae.ReinsuranceOption("No cover", retention=1_000_000, premium=0),
-    ae.ReinsuranceOption("100k retention", retention=100_000, premium=25_000),
-]
+result.save_html("reports/frequency-evaluation.html")
+comparison.save_html("reports/model-comparison.html")
 
-selection = ae.select_reinsurance_option(
-    aggregate_loss_distribution,
-    options,
-    risk_measure="expected_shortfall",
-    risk_quantile=0.995,
-    capital_cost_rate=0.10,
-    random_state=42,
-)
+ae.export_table(comparison, "reports/model-comparison.csv")
+ae.export_table(comparison, "reports/model-comparison.json")
 
-realized = ae.reinsurance_decision_regret(
-    aggregate_loss=realized_annual_losses,
-    selected=selection.selected,
-    benchmark=options[0],
-)
+axis = ae.plot_calibration(y_true, y_pred, exposure=exposure)
+ae.save_plot(axis, "reports/calibration.png", dpi=180)
 ```
 
-For reinsurance selection, each sampled row is a scenario and columns are
-summed into portfolio aggregate loss. Dependence must therefore already be
-represented by the supplied distribution's joint samples. Built-in parametric
-adapters sample observation columns independently; use `EmpiricalDistribution`
-with joint scenario draws when portfolio dependence matters.
+HTML reports contain no JavaScript or remote assets and can be archived for
+offline review.
 
-## Supported MVP metrics
+## Input contract
 
-| Metric | Category | Interpretation |
-|---|---|---|
-| `mae` | accuracy | Lower is better |
-| `rmse` | accuracy | Lower is better |
-| `poisson_deviance` | accuracy | Lower; frequency only |
-| `gamma_deviance` | accuracy | Lower; positive severity only |
-| `tweedie_deviance` | accuracy | Lower; explicit power required |
-| `ae_ratio` | calibration | Target is 1 |
-| `weighted_calibration_error` | calibration | Lower is better |
-| `gini` | discrimination | Higher is better |
-| `normalized_gini` | discrimination | Perfect ordering is 1 |
-| `lift` | discrimination | Higher means stronger top-group concentration |
-| `tail_mae` | tail risk | Lower is better |
-| `tail_rmse` | tail risk | Lower is better |
-| `tail_ae_ratio` | tail risk | Target is 1 |
-| `crps` | probabilistic | Lower is better |
-| `log_score` | probabilistic | Lower is better |
-| `brier_score` | probabilistic | Lower is better for an explicit event |
-| `quantile_score` | probabilistic | Lower is better |
-| `interval_score` | probabilistic | Lower is better |
-| `interval_coverage` | uncertainty | Compare with requested coverage |
-| `interval_width` | uncertainty | Sharpness; no universal direction |
-| `predictive_variance` | uncertainty | No universal direction |
-| `predictive_entropy` | uncertainty | No universal direction |
+- `y_true` and `y_pred` are finite, one-dimensional, nonnegative arrays on the
+  same scale.
+- Frequency and pure-premium rates should be supplied with policy exposure.
+- Severity observations are normally claim-level; `sample_weight` is often
+  more meaningful than exposure.
+- When both are present, effective weight is `sample_weight * exposure`.
+- ActEval does not silently convert claim counts to rates.
+- Observed-tail diagnostics select rows using realized outcomes and are
+  retrospective—not predictive tail probabilities.
 
-Use `ae.list_metrics()` for machine-readable registry metadata. Exact formulas
-and limitations are in [the metric reference](docs/metric-reference.md).
+## Documentation
+
+- [API guide](https://github.com/aminemanai2003/acteval/blob/main/docs/api.md)
+- [Metric reference](https://github.com/aminemanai2003/acteval/blob/main/docs/metric-reference.md)
+- [Bootstrap inference](https://github.com/aminemanai2003/acteval/blob/main/docs/inference.md)
+- [Monitoring](https://github.com/aminemanai2003/acteval/blob/main/docs/monitoring.md)
+- [Reporting](https://github.com/aminemanai2003/acteval/blob/main/docs/reporting.md)
+- [Decision reference](https://github.com/aminemanai2003/acteval/blob/main/docs/decision-reference.md)
+- [API stability policy](https://github.com/aminemanai2003/acteval/blob/main/docs/stability.md)
+- [Migrating from 0.3 to 1.0](https://github.com/aminemanai2003/acteval/blob/main/docs/migration-1.0.md)
 
 ## Development
 
@@ -303,26 +312,19 @@ cd acteval
 python -m venv .venv
 python -m pip install -e ".[dev]"
 ruff check .
+ruff format --check .
 mypy src/acteval
 pytest
 python -m build
 ```
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) and the
-[implementation audit](docs/plan-audit.md).
+Contributions are welcome. Read [CONTRIBUTING.md](https://github.com/aminemanai2003/acteval/blob/main/CONTRIBUTING.md)
+and the [security policy](https://github.com/aminemanai2003/acteval/blob/main/SECURITY.md)
+before opening a pull request or reporting a vulnerability.
 
-## Implemented releases
+## Versioning and license
 
-- v0.1: point-prediction accuracy, calibration, discrimination, tail
-  diagnostics, comparisons, and plotting.
-- v0.2: predictive-distribution scores and uncertainty diagnostics.
-- v0.3: explicit benchmarked pricing, loss-ratio, reserve, capital, and
-  reinsurance financial consequences.
+ActEval follows Semantic Versioning from 1.0 onward. Public compatibility and
+deprecation guarantees are documented in the stability policy.
 
-The original v0.1-v0.3 implementation plan is complete. Remaining work is
-release operations and future scope, not missing behavior from that plan. See
-the [completion audit](docs/plan-audit.md) for boundaries and evidence.
-
-## License
-
-Apache-2.0.
+Licensed under the [Apache License 2.0](https://github.com/aminemanai2003/acteval/blob/main/LICENSE).

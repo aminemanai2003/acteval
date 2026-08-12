@@ -1,5 +1,30 @@
 # Changelog
 
+## 1.0.0 - Unreleased
+
+### Stable API and packaging
+
+- Declared the documented public API stable under Semantic Versioning.
+- Centralized package version metadata and moved to the Production/Stable
+  classifier.
+- Added a formal API stability policy and security reporting policy.
+- Reworked the README as a complete Python-library landing page.
+
+### v0.5 reporting and monitoring layer
+
+- Added portfolio-segment evaluation and aligned segment model comparison.
+- Added chronological evaluation with signed changes from a baseline period.
+- Added weighted reference-quantile prediction drift and PSI contributions.
+- Added dependency-light standalone HTML reports and CSV/JSON/HTML exports.
+- Added a supported helper for exporting Matplotlib figures.
+
+### v0.4 statistical inference layer
+
+- Added reproducible percentile-bootstrap intervals for evaluation metrics.
+- Added objective-aware paired bootstrap comparisons against named references.
+- Added fixed-bin stratified bootstrap intervals for calibration tables.
+- Added structured inference results and CSV export.
+
 ## 0.3.0 - 2026-08-12
 
 - Added generic benchmarked financial decision regret.

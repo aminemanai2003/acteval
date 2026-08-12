@@ -21,6 +21,11 @@ pytest
 python -m build
 ```
 
+CI must pass on every Python version listed in `pyproject.toml`. Public API
+changes must update the API guide, README, changelog, tests, and stability
+policy where relevant. Backward-incompatible changes require a major release
+unless they correct a security issue or materially invalid calculation.
+
 New metrics must document their definition, direction or target, supported
 tasks, domain assumptions, limitations, and references where applicable. Add
 basic, weighted, edge, invalid-input, and known-value tests. Do not introduce a

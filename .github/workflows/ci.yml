@@ -16,7 +16,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.11", "3.12", "3.13"]
+        python-version: ["3.11", "3.12", "3.13", "3.14"]
 
     steps:
       - uses: actions/checkout@v7
@@ -36,4 +36,4 @@ jobs:
       - run: >-
           python -c "import acteval as ae;
           assert ae.rmse([1, 2], [1, 2]) == 0;
-          assert ae.__version__ == '0.3.0'"
+          assert ae.__version__ == '1.0.0'"

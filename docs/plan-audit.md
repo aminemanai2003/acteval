@@ -100,3 +100,27 @@ universal model score.
 - The distribution is ready for PyPI trusted publishing as
   `acteval-insurance`, but registering the publisher and issuing the first
   release require repository/PyPI owner actions.
+
+## Version 1.0 extension audit
+
+The v0.4, v0.5, and v1.0 extension roadmap is implemented as the 1.0 public
+surface:
+
+| Roadmap requirement | Evidence |
+|---|---|
+| Bootstrap confidence intervals | `bootstrap_evaluate()` and structured confidence intervals |
+| A/E, Gini, lift, and tail uncertainty | Registry-driven inference supports every point metric selected by the caller |
+| Paired model comparison | Shared row resamples and objective-aware candidate/reference deltas |
+| Calibration uncertainty | Fixed risk bins with stratified intervals for prediction, observation, and A/E |
+| HTML reports | Standalone escaped documents with no remote assets or JavaScript |
+| Exportable tables and plots | CSV/JSON/HTML `export_table()` and `save_plot()` |
+| Portfolio segments | Single- and multi-model segment result objects |
+| Temporal validation | Ordered period metrics and signed baseline changes |
+| Prediction drift | Weighted reference-quantile PSI contributions and mean shifts |
+| Stable API | Semantic Versioning and documented compatibility/deprecation policy |
+| Performance | Cached metric signature validation for repeated bootstrap/segment evaluation |
+| Documentation | Dedicated inference, monitoring, reporting, migration, stability, security, and README audit documents |
+| Production metadata | Single-source 1.0 version, stable classifier, typed marker, citation metadata |
+
+Completion requires local and remote formatting, lint, strict typing, full tests,
+source/wheel builds, clean artifact installation, and public API smoke tests.
