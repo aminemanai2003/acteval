@@ -440,10 +440,13 @@ class TweedieDistribution:
             self.dispersion * (self.power - 1) * np.power(self._mean, self.power - 1)
         )
         counts = generator.poisson(poisson_mean, size=(size, self.n_observations))
-        return generator.gamma(
-            counts * gamma_shape,
-            gamma_scale,
-        ).astype(np.float64)
+        return np.asarray(
+            generator.gamma(
+                counts * gamma_shape,
+                gamma_scale,
+            ),
+            dtype=np.float64,
+        )
 
     def log_prob(self, y: ArrayLike) -> NumericArray:
         del y
