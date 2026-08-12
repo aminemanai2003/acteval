@@ -1,0 +1,64 @@
+"""Conventional point-prediction accuracy metrics."""
+
+import numpy as np
+from numpy.typing import ArrayLike
+
+from acteval.registry import register_metric
+from acteval.types import Task
+from acteval.validation import combine_weights, validate_inputs
+
+_ALL_TASKS: tuple[Task, ...] = (
+    "claim_frequency",
+    "claim_severity",
+    "pure_premium",
+)
+
+
+@register_metric(
+    name="mae",
+    tasks=_ALL_TASKS,
+    category="accuracy",
+    higher_is_better=False,
+    description="Mean absolute error, optionally weighted.",
+)
+def mae(
+    y_true: ArrayLike,
+    y_pred: ArrayLike,
+    *,
+    sample_weight: ArrayLike | None = None,
+) -> float:
+    """Compute mean absolute error.
+
+    MAE is the (optionally weighted) arithmetic mean of
+    ``abs(y_true - y_pred)``. It has the same unit as the target and is less
+    sensitive to large errors than RMSE. It does not measure calibration or
+    discrimination.
+    """
+    inputs = validate_inputs(y_true, y_pred, sample_weight=sample_weight)
+    absolute_error = np.abs(inputs.y_true - inputs.y_pred)
+    return float(np.average(absolute_error, weights=combine_weights(inputs)))
+
+
+@register_metric(
+    name="rmse",
+    tasks=_ALL_TASKS,
+    category="accuracy",
+    higher_is_better=False,
+    description="Root mean squared error, optionally weighted.",
+)
+def rmse(
+    y_true: ArrayLike,
+    y_pred: ArrayLike,
+    *,
+    sample_weight: ArrayLike | None = None,
+) -> float:
+    """Compute root mean squared error.
+
+    RMSE is the square root of the (optionally weighted) mean squared error.
+    It has the same unit as the target and emphasizes larger errors. It does
+    not identify whether error concentration occurs in actuarially important
+    portfolio segments.
+    """
+    inputs = validate_inputs(y_true, y_pred, sample_weight=sample_weight)
+    squared_error = np.square(inputs.y_true - inputs.y_pred)
+    return float(np.sqrt(np.average(squared_error, weights=combine_weights(inputs))))
