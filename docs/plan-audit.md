@@ -48,17 +48,13 @@ definitions are defensible.
 - Synthetic trade-off script/notebook and metric/API documentation.
 - Wheel/sdist builds and trusted-publishing release workflow.
 
-## Deliberately deferred research layers
+## Later layers implemented after the MVP
 
-The v0.2 predictive-distribution layer and v0.3 decision-aware layer are not
-part of the point-prediction MVP. Their APIs require additional definitions:
+Version 0.2 adds vectorized predictive distributions, explicit sample shapes,
+reproducible sample-based scores, proper log/Brier/quantile/interval scores, and
+uncertainty diagnostics. Entropy has no optimization direction.
 
-- array and broadcasting contracts for per-observation distributions;
-- analytical versus sample-based scoring behavior;
-- random-state and reproducibility semantics;
-- defensible actuarial decision rules, financial loss functions, and
-  non-oracle benchmarks.
-
-Entropy will only be presented as an uncertainty diagnostic, never a universal
-quality measure. No pricing, reserving, capital, or reinsurance regret metric
-will be registered without a documented decision and consequence model.
+Version 0.3 adds explicit financial decision rules and named benchmarks for
+pricing, loss ratios, reserve shortfall, capital shortfall, and quoted
+stop-loss reinsurance choices. Regret remains a difference in financial loss
+and is never combined across decision objectives.

@@ -17,6 +17,13 @@ def test_probabilistic_example_executes(capsys: object) -> None:
     assert "log_score" in output
 
 
+def test_decision_example_executes(capsys: object) -> None:
+    runpy.run_path("examples/decision_aware.py", run_name="__main__")
+    output = capsys.readouterr().out  # type: ignore[attr-defined]
+    assert "Pricing:" in output
+    assert "Reinsurance selection:" in output
+
+
 def test_example_notebook_is_valid_notebook_json() -> None:
     notebook = json.loads(
         Path("examples/synthetic_frequency.ipynb").read_text(encoding="utf-8")

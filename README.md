@@ -12,6 +12,8 @@ that one model is universally best.
 
 Version 0.2 also evaluates full predictive distributions using proper scoring
 rules and keeps uncertainty diagnostics separate from model-quality claims.
+Version 0.3 adds explicit, benchmarked financial decision diagnostics without
+collapsing pricing, reserving, capital, and reinsurance into one score.
 
 ## Installation
 
@@ -196,6 +198,71 @@ use a deterministic Monte Carlo approximation. Tweedie log density and entropy
 are not exposed because the adapter does not yet contain a validated numerical
 series implementation.
 
+## Decision-aware evaluation
+
+Decision functions always expose their financial loss and benchmark. Regret is
+`model financial loss - benchmark financial loss` in the loss function's unit.
+It may be negative when the model decision outperforms the benchmark. Relative
+regret is omitted when benchmark loss is zero.
+
+```python
+premiums = ae.premium_from_distribution(
+    severity_distribution,
+    profit_loading=0.08,
+    expense_ratio=0.20,
+)
+
+pricing = ae.pricing_regret(
+    y_true=realized_loss,
+    premium=premiums,
+    benchmark_premium=current_tariff,
+    underpricing_cost=2.0,
+    overpricing_cost=1.0,
+    benchmark_name="current tariff",
+)
+
+loss_ratio = ae.loss_ratio_impact(
+    realized_loss,
+    premiums,
+    target_loss_ratio=0.70,
+)
+
+reserve = ae.reserve_shortfall(realized_loss, held_reserve)
+capital = ae.capital_shortfall(realized_loss, available_capital)
+```
+
+Stop-loss reinsurance selection compares quoted options under one explicit
+rule: premium plus expected retained aggregate loss plus a user-selected cost
+of VaR or expected-shortfall capital.
+
+```python
+options = [
+    ae.ReinsuranceOption("No cover", retention=1_000_000, premium=0),
+    ae.ReinsuranceOption("100k retention", retention=100_000, premium=25_000),
+]
+
+selection = ae.select_reinsurance_option(
+    aggregate_loss_distribution,
+    options,
+    risk_measure="expected_shortfall",
+    risk_quantile=0.995,
+    capital_cost_rate=0.10,
+    random_state=42,
+)
+
+realized = ae.reinsurance_decision_regret(
+    aggregate_loss=realized_annual_losses,
+    selected=selection.selected,
+    benchmark=options[0],
+)
+```
+
+For reinsurance selection, each sampled row is a scenario and columns are
+summed into portfolio aggregate loss. Dependence must therefore already be
+represented by the supplied distribution's joint samples. Built-in parametric
+adapters sample observation columns independently; use `EmpiricalDistribution`
+with joint scenario draws when portfolio dependence matters.
+
 ## Supported MVP metrics
 
 | Metric | Category | Interpretation |
@@ -247,9 +314,8 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) and the
 - v0.1: point-prediction accuracy, calibration, discrimination, tail
   diagnostics, comparisons, and plotting.
 - v0.2: predictive-distribution scores and uncertainty diagnostics.
-- v0.3: researched decision-aware actuarial consequences such as pricing or
-  capital regret. No decision metric will be added without a defensible loss
-  function and benchmark.
+- v0.3: explicit benchmarked pricing, loss-ratio, reserve, capital, and
+  reinsurance financial consequences.
 
 ## License
 
