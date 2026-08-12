@@ -14,6 +14,15 @@ def test_mae_weighted() -> None:
     assert mae([1, 2, 4], [0, 2, 7], sample_weight=[1, 2, 1]) == pytest.approx(1)
 
 
+def test_mae_combines_exposure_and_sample_weight() -> None:
+    assert mae(
+        [1, 2, 4],
+        [0, 2, 7],
+        exposure=[1, 2, 1],
+        sample_weight=[1, 2, 1],
+    ) == pytest.approx(2 / 3)
+
+
 def test_rmse_known_value() -> None:
     assert rmse([1, 2, 4], [0, 2, 7]) == pytest.approx(math.sqrt(10 / 3))
 

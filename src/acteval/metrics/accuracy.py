@@ -26,6 +26,7 @@ def mae(
     y_pred: ArrayLike,
     *,
     sample_weight: ArrayLike | None = None,
+    exposure: ArrayLike | None = None,
 ) -> float:
     """Compute mean absolute error.
 
@@ -34,7 +35,12 @@ def mae(
     sensitive to large errors than RMSE. It does not measure calibration or
     discrimination.
     """
-    inputs = validate_inputs(y_true, y_pred, sample_weight=sample_weight)
+    inputs = validate_inputs(
+        y_true,
+        y_pred,
+        sample_weight=sample_weight,
+        exposure=exposure,
+    )
     absolute_error = np.abs(inputs.y_true - inputs.y_pred)
     return float(np.average(absolute_error, weights=combine_weights(inputs)))
 
@@ -51,6 +57,7 @@ def rmse(
     y_pred: ArrayLike,
     *,
     sample_weight: ArrayLike | None = None,
+    exposure: ArrayLike | None = None,
 ) -> float:
     """Compute root mean squared error.
 
@@ -59,6 +66,11 @@ def rmse(
     not identify whether error concentration occurs in actuarially important
     portfolio segments.
     """
-    inputs = validate_inputs(y_true, y_pred, sample_weight=sample_weight)
+    inputs = validate_inputs(
+        y_true,
+        y_pred,
+        sample_weight=sample_weight,
+        exposure=exposure,
+    )
     squared_error = np.square(inputs.y_true - inputs.y_pred)
     return float(np.sqrt(np.average(squared_error, weights=combine_weights(inputs))))

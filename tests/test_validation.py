@@ -2,7 +2,13 @@ import numpy as np
 import pytest
 
 from acteval.exceptions import InputValidationError
-from acteval.validation import combine_weights, validate_inputs
+from acteval.validation import (
+    combine_weights,
+    validate_inputs,
+    validate_n_bins,
+    validate_probability,
+    validate_task,
+)
 
 
 @pytest.mark.parametrize(
@@ -38,3 +44,15 @@ def test_disjoint_positive_weights_are_rejected() -> None:
     )
     with pytest.raises(InputValidationError, match="combined weight"):
         combine_weights(inputs)
+
+
+def test_task_probability_and_bin_validation() -> None:
+    assert validate_task(" Claim_Frequency ") == "claim_frequency"
+    assert validate_probability(0.25, name="q") == pytest.approx(0.25)
+    assert validate_n_bins(2) == 2
+    with pytest.raises(InputValidationError, match="Unknown task"):
+        validate_task("frequency")
+    with pytest.raises(InputValidationError, match="between 0 and 1"):
+        validate_probability(1, name="q")
+    with pytest.raises(InputValidationError, match="greater than or equal"):
+        validate_n_bins(1)

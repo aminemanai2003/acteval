@@ -27,6 +27,7 @@ class MetricDefinition:
     category: MetricCategory
     supported_tasks: tuple[Task, ...]
     higher_is_better: bool | None
+    target: float | None
     requires_distribution: bool
     description: str
     reference: str | None
@@ -49,6 +50,7 @@ def register_metric(
     description: str,
     requires_distribution: bool = False,
     reference: str | None = None,
+    target: float | None = None,
 ) -> Callable[[F], F]:
     """Register a metric function and its evaluation metadata."""
     normalized_name = name.strip().lower()
@@ -70,6 +72,7 @@ def register_metric(
             category=category,
             supported_tasks=supported_tasks,
             higher_is_better=higher_is_better,
+            target=target,
             requires_distribution=requires_distribution,
             description=description,
             reference=reference,

@@ -7,9 +7,14 @@ import numpy as np
 from numpy.typing import ArrayLike
 
 from acteval.exceptions import InputValidationError
-from acteval.types import NumericArray
+from acteval.types import NumericArray, Task
 
 Domain = Literal["real", "nonnegative", "positive"]
+VALID_TASKS: tuple[Task, ...] = (
+    "claim_frequency",
+    "claim_severity",
+    "pure_premium",
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -22,7 +27,8 @@ class ValidatedInputs:
     exposure: NumericArray | None
 
 
-def _as_1d_float_array(values: ArrayLike, *, name: str) -> NumericArray:
+def as_1d_float_array(values: ArrayLike, *, name: str) -> NumericArray:
+    """Convert numeric array-like input into a finite float64 vector."""
     try:
         array = np.asarray(values, dtype=np.float64)
     except (TypeError, ValueError) as error:
@@ -53,7 +59,7 @@ def _validate_weight(
 ) -> NumericArray | None:
     if values is None:
         return None
-    array = _as_1d_float_array(values, name=name)
+    array = as_1d_float_array(values, name=name)
     if len(array) != expected_length:
         raise InputValidationError(
             f"{name} has length {len(array)}; expected {expected_length}."
@@ -79,8 +85,8 @@ def validate_inputs(
     Arrays must be non-empty, one-dimensional, finite, and equally sized.
     Weights and exposures must be nonnegative and have positive total mass.
     """
-    observed = _as_1d_float_array(y_true, name="y_true")
-    predicted = _as_1d_float_array(y_pred, name="y_pred")
+    observed = as_1d_float_array(y_true, name="y_true")
+    predicted = as_1d_float_array(y_pred, name="y_pred")
     if len(observed) != len(predicted):
         raise InputValidationError(
             f"y_true has length {len(observed)}; y_pred has length {len(predicted)}."
@@ -109,3 +115,30 @@ def combine_weights(inputs: ValidatedInputs) -> NumericArray | None:
             "combined weight."
         )
     return combined
+
+
+def validate_task(task: str) -> Task:
+    """Validate and normalize an actuarial task name."""
+    normalized = task.strip().lower()
+    if normalized not in VALID_TASKS:
+        choices = ", ".join(VALID_TASKS)
+        raise InputValidationError(
+            f"Unknown task {task!r}. Expected one of: {choices}."
+        )
+    return normalized
+
+
+def validate_probability(value: float, *, name: str) -> float:
+    """Validate a finite probability strictly between zero and one."""
+    if not np.isfinite(value) or not 0 < value < 1:
+        raise InputValidationError(f"{name} must be strictly between 0 and 1.")
+    return float(value)
+
+
+def validate_n_bins(n_bins: int) -> int:
+    """Validate a requested number of risk bins."""
+    if isinstance(n_bins, bool) or not isinstance(n_bins, int) or n_bins < 2:
+        raise InputValidationError(
+            "n_bins must be an integer greater than or equal to 2."
+        )
+    return n_bins
