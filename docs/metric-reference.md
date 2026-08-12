@@ -107,3 +107,65 @@ both. When neither is supplied, the default observed quantile is 0.95.
 
 Selection on observed outcomes makes these retrospective diagnostics. They are
 not estimates of a predictive tail probability or a proper scoring rule.
+
+## Proper probabilistic scores
+
+### CRPS
+
+For predictive draws `X` and an observation `y`:
+
+```text
+CRPS(F, y) = E|X-y| - 0.5 E|X-X'|
+```
+
+ActEval computes the first expectation empirically and the complete empirical
+pairwise term from sorted draws in `O(m log m)`. `n_samples` and `random_state`
+are explicit. Lower is better.
+
+### Log score
+
+```text
+-log p(y)
+```
+
+The score uses probability mass for discrete distributions and density for
+continuous distributions. Values across those measure classes are not directly
+comparable. An impossible observation produces infinite loss.
+
+### Threshold Brier score
+
+For the explicitly defined event `Y <= threshold`:
+
+```text
+(F(threshold) - 1[y <= threshold])^2
+```
+
+### Quantile score
+
+For residual `u = y - q_hat` and quantile level `alpha`:
+
+```text
+max(alpha * u, (alpha - 1) * u)
+```
+
+### Central interval score
+
+For central coverage `1-alpha`, lower `l`, and upper `u`:
+
+```text
+(u-l) + 2/alpha * (l-y) 1[y<l] + 2/alpha * (y-u) 1[y>u]
+```
+
+All proper scores are lower-is-better and can be exposure weighted.
+
+## Uncertainty diagnostics
+
+- Interval coverage is the weighted proportion satisfying `lower <= y <= upper`.
+- Interval width is weighted mean `upper-lower` and only measures sharpness
+  conditional on calibration.
+- Predictive variance is averaged across observations.
+- Predictive entropy is distribution-specific and averaged across observations.
+
+Variance, width, and entropy have no universal optimization direction. ActEval
+does not present low entropy as inherently good or high entropy as inherently
+bad.

@@ -49,3 +49,24 @@ Plotting functions return Matplotlib axes and accept an existing axis:
 - `plot_tail_diagnostics()`.
 
 Metric calculation does not import Matplotlib.
+
+## Predictive distributions
+
+All adapters implement the `PredictiveDistribution` protocol:
+
+- `n_observations`;
+- `cdf(x)`;
+- `quantile(q)`;
+- `sample(n, random_state=...)`;
+- `log_prob(y)` when a validated mass/density implementation exists;
+- `mean()`, `variance()`, and `entropy()` when defined.
+
+`evaluate_distribution()` returns an `EvaluationResult` and defaults to CRPS,
+predictive variance, and 90% central-interval coverage and width.
+
+`compare_distributions()` returns `ComparisonResult` and uses the same metric
+specification and metric-specific ranking rules as point predictions.
+
+Empirical draws do not define log density or entropy. The Tweedie adapter does
+not define log density or entropy; callers can still use sample-based CRPS and
+Monte Carlo interval/event diagnostics.

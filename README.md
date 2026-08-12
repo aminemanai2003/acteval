@@ -10,6 +10,9 @@ ActEval reports accuracy, calibration, discrimination, and observed-tail
 behavior separately. It does not create an arbitrary overall score or claim
 that one model is universally best.
 
+Version 0.2 also evaluates full predictive distributions using proper scoring
+rules and keeps uncertainty diagnostics separate from model-quality claims.
+
 ## Installation
 
 Until the first PyPI release, install the package directly from GitHub:
@@ -144,6 +147,55 @@ ae.plot_residuals(y, predictions)
 ae.plot_tail_diagnostics(y, predictions, quantile=0.95)
 ```
 
+## Predictive distributions
+
+Built-in vectorized adapters provide one predictive distribution per
+observation:
+
+- `PoissonDistribution(mu)`;
+- `NegativeBinomialDistribution(mean, dispersion)`;
+- `GammaDistribution(mean, shape)`;
+- `LognormalDistribution(meanlog, sdlog)`;
+- `EmpiricalDistribution(samples)`;
+- `TweedieDistribution(mean, power, dispersion)` for compound
+  Poisson-Gamma `1 < power < 2`.
+
+```python
+poisson = ae.PoissonDistribution(mu=poisson_means)
+negative_binomial = ae.NegativeBinomialDistribution(
+    mean=nb_means,
+    dispersion=nb_dispersion,
+)
+
+distribution_comparison = ae.compare_distributions(
+    y_true=claim_counts,
+    distributions={
+        "Poisson": poisson,
+        "Negative Binomial": negative_binomial,
+    },
+    exposure=exposure,
+    task="claim_frequency",
+    metrics=[
+        ae.MetricSpec("crps", {"n_samples": 5000, "random_state": 42}),
+        "log_score",
+        ae.MetricSpec("brier_score", {"threshold": 0}),
+        ae.MetricSpec("interval_score", {"coverage": 0.9}),
+    ],
+)
+
+print(distribution_comparison.to_dataframe())
+```
+
+Samples have shape `(n_samples, n_observations)`. Scalar quantiles have shape
+`(n_observations,)`; vector quantiles have shape
+`(n_quantiles, n_observations)`. CRPS randomness is explicitly seeded and
+recorded in result metadata.
+
+Tweedie sampling uses the exact compound representation. Its CDF and quantiles
+use a deterministic Monte Carlo approximation. Tweedie log density and entropy
+are not exposed because the adapter does not yet contain a validated numerical
+series implementation.
+
 ## Supported MVP metrics
 
 | Metric | Category | Interpretation |
@@ -161,6 +213,15 @@ ae.plot_tail_diagnostics(y, predictions, quantile=0.95)
 | `tail_mae` | tail risk | Lower is better |
 | `tail_rmse` | tail risk | Lower is better |
 | `tail_ae_ratio` | tail risk | Target is 1 |
+| `crps` | probabilistic | Lower is better |
+| `log_score` | probabilistic | Lower is better |
+| `brier_score` | probabilistic | Lower is better for an explicit event |
+| `quantile_score` | probabilistic | Lower is better |
+| `interval_score` | probabilistic | Lower is better |
+| `interval_coverage` | uncertainty | Compare with requested coverage |
+| `interval_width` | uncertainty | Sharpness; no universal direction |
+| `predictive_variance` | uncertainty | No universal direction |
+| `predictive_entropy` | uncertainty | No universal direction |
 
 Use `ae.list_metrics()` for machine-readable registry metadata. Exact formulas
 and limitations are in [the metric reference](docs/metric-reference.md).
@@ -185,8 +246,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) and the
 
 - v0.1: point-prediction accuracy, calibration, discrimination, tail
   diagnostics, comparisons, and plotting.
-- v0.2: carefully specified predictive-distribution scores and uncertainty
-  diagnostics.
+- v0.2: predictive-distribution scores and uncertainty diagnostics.
 - v0.3: researched decision-aware actuarial consequences such as pricing or
   capital regret. No decision metric will be added without a defensible loss
   function and benchmark.

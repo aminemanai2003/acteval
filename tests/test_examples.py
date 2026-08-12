@@ -10,6 +10,13 @@ def test_synthetic_example_executes(capsys: object) -> None:
     assert "tail_ae_95" in output
 
 
+def test_probabilistic_example_executes(capsys: object) -> None:
+    runpy.run_path("examples/probabilistic_frequency.py", run_name="__main__")
+    output = capsys.readouterr().out  # type: ignore[attr-defined]
+    assert "Negative Binomial" in output
+    assert "log_score" in output
+
+
 def test_example_notebook_is_valid_notebook_json() -> None:
     notebook = json.loads(
         Path("examples/synthetic_frequency.ipynb").read_text(encoding="utf-8")
