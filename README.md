@@ -17,16 +17,16 @@ collapsing pricing, reserving, capital, and reinsurance into one score.
 
 ## Installation
 
-Until the first PyPI release, install the package directly from GitHub:
+Install the package from PyPI:
 
 ```bash
-python -m pip install "acteval-insurance @ git+https://github.com/aminemanai2003/acteval.git"
+python -m pip install acteval-insurance
 ```
 
 For plots:
 
 ```bash
-python -m pip install "acteval-insurance[plot] @ git+https://github.com/aminemanai2003/acteval.git"
+python -m pip install "acteval-insurance[plot]"
 ```
 
 The distribution is named `acteval-insurance` because `acteval` is occupied by
