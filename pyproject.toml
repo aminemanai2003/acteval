@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "acteval-insurance"
-version = "0.1.0"
+version = "0.2.0"
 description = "Model-agnostic evaluation of actuarial predictive models"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -28,6 +28,7 @@ dependencies = [
   "numpy>=1.26",
   "pandas>=2.1",
   "scikit-learn>=1.4",
+  "scipy>=1.11",
 ]
 
 [project.optional-dependencies]
@@ -78,4 +79,8 @@ packages = ["acteval"]
 
 [[tool.mypy.overrides]]
 module = "sklearn.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "scipy.*"
 ignore_missing_imports = true

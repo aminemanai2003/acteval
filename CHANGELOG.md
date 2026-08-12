@@ -1,6 +1,17 @@
 # Changelog
 
-## 0.1.0 - Unreleased
+## 0.2.0 - Unreleased
+
+- Added vectorized Poisson, Negative Binomial, Gamma, Lognormal, empirical,
+  and compound Poisson-Gamma Tweedie predictive distributions.
+- Added sample-based CRPS, log score, threshold Brier score, quantile score,
+  and central interval score.
+- Added prediction-interval coverage and width diagnostics.
+- Added predictive variance and entropy diagnostics without universal ranking
+  directions.
+- Added `evaluate_distribution()` and `compare_distributions()`.
+
+## 0.1.0 - 2026-08-12
 
 - Added validated, exposure-aware actuarial point-prediction inputs.
 - Added MAE, RMSE, Poisson, Gamma, and explicit-power Tweedie deviance.

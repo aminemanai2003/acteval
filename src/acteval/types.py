@@ -38,11 +38,17 @@ class MetricSpec:
 
 
 class PredictiveDistribution(Protocol):
-    """Minimal future-facing interface for probabilistic predictions.
+    """Vectorized predictive distributions, one distribution per observation.
 
-    The protocol is architectural only in v0.1. No probabilistic metrics are
-    registered until their numerical contracts are specified and tested.
+    Scalar quantiles return shape ``(n_observations,)``. A vector of quantiles
+    returns ``(n_quantiles, n_observations)``. Samples always return
+    ``(n_samples, n_observations)``.
     """
+
+    @property
+    def n_observations(self) -> int:
+        """Number of per-observation predictive distributions."""
+        ...
 
     def cdf(self, x: ArrayLike) -> NumericArray:
         """Evaluate the cumulative distribution function at ``x``."""
@@ -52,6 +58,27 @@ class PredictiveDistribution(Protocol):
         """Evaluate predictive quantiles at probabilities ``q``."""
         ...
 
-    def sample(self, n: int) -> NumericArray:
+    def sample(
+        self,
+        n: int,
+        *,
+        random_state: int | np.random.Generator | None = None,
+    ) -> NumericArray:
         """Draw ``n`` samples from each predictive distribution."""
+        ...
+
+    def log_prob(self, y: ArrayLike) -> NumericArray:
+        """Evaluate per-observation log probability or log density."""
+        ...
+
+    def mean(self) -> NumericArray:
+        """Return predictive means."""
+        ...
+
+    def variance(self) -> NumericArray:
+        """Return predictive variances."""
+        ...
+
+    def entropy(self) -> NumericArray:
+        """Return distribution-specific predictive entropy."""
         ...

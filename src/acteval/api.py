@@ -11,11 +11,17 @@ from acteval.exceptions import InputValidationError
 from acteval.registry import get_metric
 from acteval.reports import ComparisonResult, EvaluationResult
 from acteval.tasks import DEFAULT_METRICS
-from acteval.types import MetricSpec, Task
+from acteval.types import MetricSpec, PredictiveDistribution, Task
 from acteval.validation import validate_inputs, validate_task
 
 MetricSelection = str | MetricSpec
 _TAIL_ALIAS = re.compile(r"^(tail_mae|tail_rmse|tail_ae)_(\d+(?:\.\d+)?)$")
+_DEFAULT_DISTRIBUTION_METRICS = (
+    MetricSpec("crps", {"n_samples": 2_000, "random_state": 0}),
+    MetricSpec("predictive_variance"),
+    MetricSpec("interval_coverage", {"coverage": 0.9}, label="coverage_90"),
+    MetricSpec("interval_width", {"coverage": 0.9}, label="interval_width_90"),
+)
 
 
 def _parse_metric(selection: MetricSelection) -> MetricSpec:
@@ -200,6 +206,163 @@ def compare(
         {
             "models": tuple(results),
             "n_models": len(results),
+            "no_universal_best_model": True,
+        },
+    )
+
+
+def _evaluate_distribution_metric(
+    specification: MetricSpec,
+    *,
+    task: Task,
+    y_true: ArrayLike,
+    distribution: PredictiveDistribution,
+    sample_weight: ArrayLike | None,
+    exposure: ArrayLike | None,
+) -> tuple[str, float, dict[str, Any]]:
+    definition = get_metric(specification.name)
+    if not definition.requires_distribution:
+        raise InputValidationError(
+            f"Metric {specification.name!r} is not a predictive-distribution metric."
+        )
+    if task not in definition.supported_tasks:
+        raise InputValidationError(
+            f"Metric {specification.name!r} does not support task {task!r}."
+        )
+    keyword_arguments = {
+        "sample_weight": sample_weight,
+        "exposure": exposure,
+        **specification.parameters,
+    }
+    try:
+        signature(definition.function).bind(
+            y_true,
+            distribution,
+            **keyword_arguments,
+        )
+    except TypeError as error:
+        raise InputValidationError(
+            f"Invalid parameters for metric {specification.name!r}: "
+            f"{dict(specification.parameters)!r}."
+        ) from error
+    value = definition(y_true, distribution, **keyword_arguments)
+    label = _metric_label(specification)
+    return (
+        label,
+        value,
+        {
+            "name": definition.name,
+            "category": definition.category,
+            "higher_is_better": definition.higher_is_better,
+            "target": definition.target,
+            "parameters": dict(specification.parameters),
+            "reference": definition.reference,
+            "requires_distribution": True,
+        },
+    )
+
+
+def evaluate_distribution(
+    y_true: ArrayLike,
+    distribution: PredictiveDistribution,
+    *,
+    task: str,
+    exposure: ArrayLike | None = None,
+    sample_weight: ArrayLike | None = None,
+    metrics: Sequence[MetricSelection] | None = None,
+) -> EvaluationResult:
+    """Evaluate one predictive distribution per observation.
+
+    The default report contains sample-approximated CRPS, predictive variance,
+    and 90% central-interval coverage and width. Log score and entropy are
+    opt-in because not every distribution adapter supplies validated density
+    or entropy methods.
+    """
+    resolved_task = validate_task(task)
+    validated = validate_inputs(
+        y_true,
+        y_true,
+        sample_weight=sample_weight,
+        exposure=exposure,
+        y_true_domain="nonnegative",
+    )
+    if distribution.n_observations != len(validated.y_true):
+        raise InputValidationError(
+            "Predictive distribution length does not match y_true."
+        )
+    selections = (
+        _DEFAULT_DISTRIBUTION_METRICS
+        if metrics is None
+        else tuple(_parse_metric(metric) for metric in metrics)
+    )
+    if not selections:
+        raise InputValidationError("metrics must contain at least one metric.")
+    values: dict[str, float] = {}
+    specifications: dict[str, dict[str, Any]] = {}
+    for specification in selections:
+        label, value, metadata = _evaluate_distribution_metric(
+            specification,
+            task=resolved_task,
+            y_true=validated.y_true,
+            distribution=distribution,
+            sample_weight=validated.sample_weight,
+            exposure=validated.exposure,
+        )
+        if label in values:
+            raise InputValidationError(f"Duplicate metric output label: {label!r}.")
+        values[label] = value
+        specifications[label] = metadata
+    return EvaluationResult(
+        resolved_task,
+        values,
+        {
+            "n_observations": len(validated.y_true),
+            "distribution_type": type(distribution).__name__,
+            "has_exposure": exposure is not None,
+            "has_sample_weight": sample_weight is not None,
+            "metric_specs": specifications,
+            "entropy_is_not_universal_quality": True,
+        },
+    )
+
+
+def compare_distributions(
+    y_true: ArrayLike,
+    distributions: Mapping[str, PredictiveDistribution],
+    *,
+    task: str,
+    exposure: ArrayLike | None = None,
+    sample_weight: ArrayLike | None = None,
+    metrics: Sequence[MetricSelection] | None = None,
+) -> ComparisonResult:
+    """Compare predictive distributions under identical scoring rules."""
+    resolved_task = validate_task(task)
+    if not distributions:
+        raise InputValidationError("distributions must contain at least one model.")
+    results: dict[str, EvaluationResult] = {}
+    for raw_name, distribution in distributions.items():
+        if not isinstance(raw_name, str) or not raw_name.strip():
+            raise InputValidationError(
+                "Every distribution model name must be non-empty."
+            )
+        model_name = raw_name.strip()
+        if model_name in results:
+            raise InputValidationError(f"Duplicate model name: {model_name!r}.")
+        results[model_name] = evaluate_distribution(
+            y_true,
+            distribution,
+            task=resolved_task,
+            exposure=exposure,
+            sample_weight=sample_weight,
+            metrics=metrics,
+        )
+    return ComparisonResult(
+        resolved_task,
+        results,
+        {
+            "models": tuple(results),
+            "n_models": len(results),
+            "distribution_comparison": True,
             "no_universal_best_model": True,
         },
     )
