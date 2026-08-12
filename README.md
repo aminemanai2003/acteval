@@ -193,10 +193,12 @@ Samples have shape `(n_samples, n_observations)`. Scalar quantiles have shape
 `(n_quantiles, n_observations)`. CRPS randomness is explicitly seeded and
 recorded in result metadata.
 
-Tweedie sampling uses the exact compound representation. Its CDF and quantiles
-use a deterministic Monte Carlo approximation. Tweedie log density and entropy
-are not exposed because the adapter does not yet contain a validated numerical
-series implementation.
+Tweedie sampling uses the exact compound representation. CDF and log-density
+evaluation use a numerical series implementation; quantiles use deterministic
+Monte Carlo. Entropy is a seeded Monte Carlo estimate of `-E[log_prob(X)]` and
+is only comparable under the same mixed distribution measure. Empirical draws
+are treated as a discrete distribution: repeated values determine probability
+mass, and unseen values have log probability `-inf`.
 
 ## Decision-aware evaluation
 
@@ -309,13 +311,17 @@ python -m build
 See [CONTRIBUTING.md](CONTRIBUTING.md) and the
 [implementation audit](docs/plan-audit.md).
 
-## Roadmap
+## Implemented releases
 
 - v0.1: point-prediction accuracy, calibration, discrimination, tail
   diagnostics, comparisons, and plotting.
 - v0.2: predictive-distribution scores and uncertainty diagnostics.
 - v0.3: explicit benchmarked pricing, loss-ratio, reserve, capital, and
   reinsurance financial consequences.
+
+The original v0.1-v0.3 implementation plan is complete. Remaining work is
+release operations and future scope, not missing behavior from that plan. See
+the [completion audit](docs/plan-audit.md) for boundaries and evidence.
 
 ## License
 

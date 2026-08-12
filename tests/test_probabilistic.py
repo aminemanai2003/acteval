@@ -129,5 +129,4 @@ def test_invalid_probabilistic_inputs() -> None:
     with pytest.raises(InputValidationError, match="expected 1"):
         ae.crps([1], distribution, n_samples=10)
     empirical = ae.EmpiricalDistribution([[1, 2], [2, 3]])
-    with pytest.raises(NotImplementedError, match="discretization"):
-        ae.predictive_entropy([1, 2], empirical)
+    assert ae.predictive_entropy([1, 2], empirical) == pytest.approx(np.log(2))

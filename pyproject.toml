@@ -29,6 +29,7 @@ dependencies = [
   "pandas>=2.1",
   "scikit-learn>=1.4",
   "scipy>=1.11",
+  "tweedie>=0.0.9",
 ]
 
 [project.optional-dependencies]
@@ -83,4 +84,8 @@ ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
 module = "scipy.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "tweedie.*"
 ignore_missing_imports = true

@@ -77,6 +77,7 @@ from acteval.reports import (
     EvaluationResult,
     LiftTable,
 )
+from acteval.tasks import TaskDefinition, get_task_definition
 from acteval.types import MetricSpec, PredictiveDistribution, Task
 
 __all__ = [
@@ -98,6 +99,7 @@ __all__ = [
     "ReinsuranceSelection",
     "ShortfallResult",
     "Task",
+    "TaskDefinition",
     "TweedieDistribution",
     "ae_ratio",
     "asymmetric_absolute_loss",
@@ -117,6 +119,7 @@ __all__ = [
     "evaluate_distribution",
     "gamma_deviance",
     "get_metric",
+    "get_task_definition",
     "gini",
     "interval_score",
     "large_loss_bias",

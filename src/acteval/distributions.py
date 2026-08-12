@@ -5,6 +5,7 @@ from collections.abc import Callable
 import numpy as np
 from numpy.typing import ArrayLike
 from scipy import stats
+from tweedie import tweedie as tweedie_family
 
 from acteval.exceptions import InputValidationError
 from acteval.types import NumericArray
@@ -302,7 +303,7 @@ class LognormalDistribution:
 
 
 class EmpiricalDistribution:
-    """Per-observation predictive distributions represented by draws."""
+    """Per-observation discrete empirical distributions represented by draws."""
 
     def __init__(self, samples: ArrayLike) -> None:
         array = np.asarray(samples, dtype=np.float64)
@@ -343,10 +344,14 @@ class EmpiricalDistribution:
         return self.samples[indices].copy()
 
     def log_prob(self, y: ArrayLike) -> NumericArray:
-        del y
-        raise NotImplementedError(
-            "Log score is undefined for raw empirical draws without a density model."
+        values = _observations(y, length=self.n_observations, name="y")
+        probabilities = np.mean(
+            self.samples == values,
+            axis=0,
+            dtype=np.float64,
         )
+        with np.errstate(divide="ignore"):
+            return np.log(probabilities).astype(np.float64)
 
     def mean(self) -> NumericArray:
         return np.asarray(
@@ -359,18 +364,21 @@ class EmpiricalDistribution:
         )
 
     def entropy(self) -> NumericArray:
-        raise NotImplementedError(
-            "Entropy is undefined for raw empirical draws without discretization."
-        )
+        result = np.empty(self.n_observations, dtype=np.float64)
+        for column in range(self.n_observations):
+            _, counts = np.unique(self.samples[:, column], return_counts=True)
+            probabilities = counts / np.sum(counts)
+            result[column] = -np.sum(probabilities * np.log(probabilities))
+        return result
 
 
 class TweedieDistribution:
     """Compound Poisson-Gamma Tweedie distributions for ``1 < power < 2``.
 
-    Sampling is exact under the compound representation. CDF and quantile are
-    deterministic Monte Carlo approximations controlled by
-    ``approximation_samples`` and ``approximation_seed``. Log density and
-    entropy are intentionally unavailable without a validated series method.
+    Sampling is exact under the compound representation. CDF and log density
+    use the numerical series implementation from the ``tweedie`` package.
+    Quantiles use deterministic Monte Carlo. Entropy is the seeded Monte Carlo
+    estimate ``-E[log_prob(X)]`` under the mixed discrete/continuous measure.
     """
 
     def __init__(
@@ -408,11 +416,11 @@ class TweedieDistribution:
     def cdf(self, x: ArrayLike) -> NumericArray:
         values = _observations(x, length=self.n_observations, name="x")
         return np.asarray(
-            np.mean(
-                self._approximation() <= values,
-                axis=0,
-                dtype=np.float64,
-            ),
+            tweedie_family(
+                p=self.power,
+                mu=self._mean,
+                phi=self.dispersion,
+            ).cdf(values),
             dtype=np.float64,
         )
 
@@ -449,9 +457,14 @@ class TweedieDistribution:
         )
 
     def log_prob(self, y: ArrayLike) -> NumericArray:
-        del y
-        raise NotImplementedError(
-            "Tweedie log density requires a validated numerical series implementation."
+        values = _observations(y, length=self.n_observations, name="y")
+        return np.asarray(
+            tweedie_family(
+                p=self.power,
+                mu=self._mean,
+                phi=self.dispersion,
+            ).logpdf(values),
+            dtype=np.float64,
         )
 
     def mean(self) -> NumericArray:
@@ -461,6 +474,16 @@ class TweedieDistribution:
         return self.dispersion * np.power(self._mean, self.power)
 
     def entropy(self) -> NumericArray:
-        raise NotImplementedError(
-            "Tweedie entropy is not available from the compound sampling adapter."
-        )
+        samples = self._approximation()
+        result = np.empty(self.n_observations, dtype=np.float64)
+        for column in range(self.n_observations):
+            distribution = tweedie_family(
+                p=self.power,
+                mu=self._mean[column],
+                phi=self.dispersion[column],
+            )
+            log_probabilities = np.asarray(
+                distribution.logpdf(samples[:, column]), dtype=np.float64
+            )
+            result[column] = -float(np.mean(log_probabilities))
+        return result

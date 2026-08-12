@@ -63,10 +63,8 @@ def test_empirical_distribution_contract() -> None:
     assert distribution.cdf([1, 3]) == pytest.approx([0.5, 0.75])
     assert distribution.quantile([0.25, 0.75]).shape == (2, 2)
     assert distribution.sample(5, random_state=2).shape == (5, 2)
-    with pytest.raises(NotImplementedError, match="density model"):
-        distribution.log_prob([1, 2])
-    with pytest.raises(NotImplementedError, match="discretization"):
-        distribution.entropy()
+    assert distribution.log_prob([1, 2]) == pytest.approx(np.log([0.25, 0.25]))
+    assert distribution.entropy() == pytest.approx(np.log([4, 4]))
 
 
 def test_tweedie_compound_sampling_moments_and_approximations() -> None:
@@ -82,10 +80,8 @@ def test_tweedie_compound_sampling_moments_and_approximations() -> None:
     assert distribution.variance() == pytest.approx(0.5 * np.power([2, 5], 1.5))
     assert distribution.cdf([2, 5]).shape == (2,)
     assert distribution.quantile([0.1, 0.9]).shape == (2, 2)
-    with pytest.raises(NotImplementedError, match="log density"):
-        distribution.log_prob([2, 5])
-    with pytest.raises(NotImplementedError, match="entropy"):
-        distribution.entropy()
+    assert np.all(np.isfinite(distribution.log_prob([2, 5])))
+    assert np.all(np.isfinite(distribution.entropy()))
 
 
 @pytest.mark.parametrize(

@@ -166,6 +166,11 @@ All proper scores are lower-is-better and can be exposure weighted.
 - Predictive variance is averaged across observations.
 - Predictive entropy is distribution-specific and averaged across observations.
 
+For empirical draws, ActEval treats observed sample frequencies as a discrete
+distribution and computes exact Shannon entropy. For compound Poisson-Gamma
+Tweedie predictions, entropy is a reproducible Monte Carlo estimate of
+`-E[log_prob(X)]` under its mixed discrete/continuous measure.
+
 Variance, width, and entropy have no universal optimization direction. ActEval
 does not present low entropy as inherently good or high entropy as inherently
-bad.
+bad. Entropies under different base measures are not directly comparable.
