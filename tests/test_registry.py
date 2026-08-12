@@ -4,13 +4,21 @@ import acteval
 from acteval.exceptions import UnknownMetricError
 
 
-def test_foundation_metrics_are_registered() -> None:
+def test_mvp_scalar_metrics_are_registered() -> None:
     assert {metric.name for metric in acteval.list_metrics()} == {
         "ae_ratio",
         "gamma_deviance",
+        "gini",
+        "lift",
         "mae",
+        "normalized_gini",
         "poisson_deviance",
         "rmse",
+        "tail_ae_ratio",
+        "tail_mae",
+        "tail_rmse",
+        "tweedie_deviance",
+        "weighted_calibration_error",
     }
 
 
@@ -18,7 +26,19 @@ def test_registry_filters_by_task() -> None:
     frequency_names = {
         metric.name for metric in acteval.list_metrics(task="claim_frequency")
     }
-    assert frequency_names == {"ae_ratio", "mae", "poisson_deviance", "rmse"}
+    assert frequency_names == {
+        "ae_ratio",
+        "gini",
+        "lift",
+        "mae",
+        "normalized_gini",
+        "poisson_deviance",
+        "rmse",
+        "tail_ae_ratio",
+        "tail_mae",
+        "tail_rmse",
+        "weighted_calibration_error",
+    }
 
 
 def test_registered_metric_is_callable() -> None:

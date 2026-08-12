@@ -8,13 +8,14 @@ version = "0.1.0"
 description = "Model-agnostic evaluation of actuarial predictive models"
 readme = "README.md"
 requires-python = ">=3.11"
-license = { text = "Apache-2.0" }
+license = "Apache-2.0"
+license-files = ["LICENSE"]
 authors = [
   { name = "Amine Manai", email = "amine.manai@esprit.tn" },
 ]
 keywords = ["actuarial", "insurance", "model-evaluation", "calibration"]
 classifiers = [
-  "Development Status :: 2 - Pre-Alpha",
+  "Development Status :: 3 - Alpha",
   "Intended Audience :: Financial and Insurance Industry",
   "License :: OSI Approved :: Apache Software License",
   "Programming Language :: Python :: 3",
@@ -25,12 +26,12 @@ classifiers = [
 ]
 dependencies = [
   "numpy>=1.26",
+  "pandas>=2.1",
   "scikit-learn>=1.4",
 ]
 
 [project.optional-dependencies]
-dataframe = ["pandas>=2.1"]
-plot = ["matplotlib>=3.8", "pandas>=2.1"]
+plot = ["matplotlib>=3.8"]
 test = [
   "build>=1.2",
   "mypy>=1.11",
@@ -40,7 +41,7 @@ test = [
   "ruff>=0.9",
 ]
 dev = [
-  "acteval-insurance[dataframe,plot,test]",
+  "acteval-insurance[plot,test]",
   "pre-commit>=4.0",
 ]
 
@@ -53,8 +54,15 @@ Issues = "https://github.com/aminemanai2003/acteval/issues"
 packages = ["src/acteval"]
 
 [tool.pytest.ini_options]
-addopts = "--strict-config --strict-markers --cov=acteval --cov-report=term-missing"
+addopts = "--strict-config --strict-markers --cov=acteval --cov-report=term-missing --cov-fail-under=90"
 testpaths = ["tests"]
+
+[tool.coverage.run]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false
 
 [tool.ruff]
 target-version = "py311"
