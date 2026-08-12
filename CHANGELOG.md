@@ -9,6 +9,11 @@
 - Added quoted stop-loss reinsurance option selection under explicit
   premium, retained-loss, and capital-cost assumptions.
 - Added realized reinsurance decision regret against a named option.
+- Completed numerical Tweedie CDF/log-density evaluation and reproducible
+  mixed-measure entropy estimation.
+- Defined empirical predictive samples as discrete distributions with exact
+  probability masses and Shannon entropy.
+- Added immutable metadata modules for every supported actuarial task.
 
 ## 0.2.0 - 2026-08-12
 

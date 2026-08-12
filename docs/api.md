@@ -58,8 +58,8 @@ All adapters implement the `PredictiveDistribution` protocol:
 - `cdf(x)`;
 - `quantile(q)`;
 - `sample(n, random_state=...)`;
-- `log_prob(y)` when a validated mass/density implementation exists;
-- `mean()`, `variance()`, and `entropy()` when defined.
+- `log_prob(y)`;
+- `mean()`, `variance()`, and `entropy()`.
 
 `evaluate_distribution()` returns an `EvaluationResult` and defaults to CRPS,
 predictive variance, and 90% central-interval coverage and width.
@@ -67,9 +67,12 @@ predictive variance, and 90% central-interval coverage and width.
 `compare_distributions()` returns `ComparisonResult` and uses the same metric
 specification and metric-specific ranking rules as point predictions.
 
-Empirical draws do not define log density or entropy. The Tweedie adapter does
-not define log density or entropy; callers can still use sample-based CRPS and
-Monte Carlo interval/event diagnostics.
+`EmpiricalDistribution` is explicitly discrete: sample frequencies define its
+probability mass and exact Shannon entropy; unseen values have log probability
+`-inf`. `TweedieDistribution` uses a numerical series for its CDF and mixed
+mass/density log probability, deterministic Monte Carlo quantiles, and a seeded
+Monte Carlo estimate of `-E[log_prob(X)]`. Entropies across different base
+measures are not directly comparable.
 
 ## Decision-aware results
 

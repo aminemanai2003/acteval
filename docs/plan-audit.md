@@ -58,3 +58,45 @@ Version 0.3 adds explicit financial decision rules and named benchmarks for
 pricing, loss ratios, reserve shortfall, capital shortfall, and quoted
 stop-loss reinsurance choices. Regret remains a difference in financial loss
 and is never combined across decision objectives.
+
+## Completion matrix
+
+| Plan area | Status | Implementation evidence |
+|---|---|---|
+| Model-agnostic point API | Complete | `evaluate()`, `compare()`, array-like validation |
+| Frequency, severity, pure premium | Complete | immutable task definitions and task defaults |
+| Results and comparison ranking | Complete | `EvaluationResult`, `ComparisonResult`, metric-specific ranking |
+| Accuracy and deviance | Complete | weighted MAE/RMSE and Poisson/Gamma/Tweedie deviance |
+| Calibration | Complete | aggregate A/E, risk-quantile table, weighted calibration error |
+| Discrimination | Complete | weighted Gini, normalized Gini, scalar and tabular lift |
+| Observed-tail diagnostics | Complete | tail MAE/RMSE/A/E and large-loss bias |
+| Registry and validation | Complete | documented metric metadata and domain/shape/weight checks |
+| Plotting | Complete | calibration, lift, residual, and tail plots as optional extras |
+| Probabilistic v0.2 | Complete | six distribution adapters, five proper scores, interval and uncertainty diagnostics |
+| Decision-aware v0.3 | Complete | explicit pricing, loss-ratio, reserve, capital, and reinsurance losses/benchmarks |
+| Packaging and automation | Complete | `pyproject.toml`, full Apache-2.0 license, wheel/sdist builds, Python 3.11-3.13 CI, trusted-publishing workflow |
+| Documentation and examples | Complete | README, API/metric/decision references, scripts, executable notebook |
+
+The automated gates cover formatting, linting, strict typing, unit and
+invariant tests with branch coverage, examples, package construction, dependency
+consistency, and installation of the built wheel. There is deliberately no
+universal model score.
+
+## Deliberate boundaries
+
+- ActEval evaluates supplied predictions; it does not fit models.
+- Point inputs must already share a scale. Raw counts are not silently converted
+  to rates, and exposure becomes an effective weight.
+- Observed-tail metrics are retrospective diagnostics, not predictive tail
+  probabilities.
+- Built-in parametric distribution columns are sampled independently. Portfolio
+  dependence must be supplied as joint empirical scenario rows.
+- Empirical distributions are discrete, not kernel-density estimates. An unseen
+  value therefore has zero empirical mass and infinite log-score loss.
+- Tweedie quantiles and entropy are seeded numerical estimates; sample count and
+  seed control reproducibility and precision.
+- Reinsurance selection covers quoted stop-loss options under an explicit cost
+  model; it is not a treaty-pricing or dynamic capital model.
+- The distribution is ready for PyPI trusted publishing as
+  `acteval-insurance`, but registering the publisher and issuing the first
+  release require repository/PyPI owner actions.
