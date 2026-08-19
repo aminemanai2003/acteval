@@ -252,8 +252,9 @@ def bootstrap_evaluate(
     """Estimate percentile bootstrap intervals for point-prediction metrics.
 
     Rows are resampled jointly, preserving alignment among observations,
-    predictions, exposures, and weights. Resamples where a requested estimand is
-    mathematically undefined are retried and the retry count is recorded.
+    predictions, exposures, and weights. An undefined resample fails the run
+    instead of being discarded, which avoids conditioning the bootstrap
+    distribution on estimand validity.
     """
 
     count, confidence = _validate_bootstrap(n_resamples, confidence_level)
@@ -276,10 +277,7 @@ def bootstrap_evaluate(
     )
     metric_samples: dict[str, list[float]] = {metric: [] for metric in point.metrics}
     generator = np.random.default_rng(random_state)
-    attempts = 0
-    max_attempts = max(count * 20, count + 100)
-    while len(next(iter(metric_samples.values()))) < count and attempts < max_attempts:
-        attempts += 1
+    for resample_index in range(count):
         indices = generator.integers(0, len(validated.y_true), len(validated.y_true))
         try:
             result = evaluate(
@@ -291,18 +289,20 @@ def bootstrap_evaluate(
                 sample_weight=_slice_optional(validated.sample_weight, indices),
                 metrics=metrics,
             )
-        except ActEvalError:
-            continue
+        except ActEvalError as error:
+            raise InputValidationError(
+                f"Bootstrap resample {resample_index + 1} of {count} made a "
+                "requested metric undefined. No resamples were discarded; use "
+                "an estimand defined on degenerate samples or a different "
+                "inference design."
+            ) from error
         if not all(np.isfinite(value) for value in result.metrics.values()):
-            continue
+            raise InputValidationError(
+                f"Bootstrap resample {resample_index + 1} of {count} produced a "
+                "non-finite metric. No resamples were discarded."
+            )
         for metric, value in result.metrics.items():
             metric_samples[metric].append(value)
-    completed = len(next(iter(metric_samples.values())))
-    if completed < count:
-        raise InputValidationError(
-            f"Only {completed} valid bootstrap resamples could be generated after "
-            f"{attempts} attempts. Review degenerate outcomes or metric domains."
-        )
     intervals = {
         metric: _interval(
             point.metrics[metric],
@@ -320,8 +320,7 @@ def bootstrap_evaluate(
             "n_resamples": count,
             "confidence_level": confidence,
             "random_state": random_state,
-            "attempts": attempts,
-            "failed_resamples": attempts - count,
+            "undefined_resample_policy": "fail",
         },
     )
 
@@ -399,10 +398,7 @@ def paired_bootstrap_compare(
         (model, metric): [] for model in candidates for metric in metric_names
     }
     generator = np.random.default_rng(random_state)
-    attempts = 0
-    max_attempts = max(count * 20, count + 100)
-    while len(next(iter(samples.values()))) < count and attempts < max_attempts:
-        attempts += 1
+    for resample_index in range(count):
         indices = generator.integers(
             0, len(baseline_inputs.y_true), len(baseline_inputs.y_true)
         )
@@ -419,15 +415,21 @@ def paired_bootstrap_compare(
                 sample_weight=_slice_optional(baseline_inputs.sample_weight, indices),
                 metrics=metrics,
             )
-        except ActEvalError:
-            continue
+        except ActEvalError as error:
+            raise InputValidationError(
+                f"Paired bootstrap resample {resample_index + 1} of {count} made "
+                "a requested metric undefined. No resamples were discarded."
+            ) from error
         reference_result = result.results[reference_name]
         if not all(
             np.isfinite(metric_value)
             for evaluation in result.results.values()
             for metric_value in evaluation.metrics.values()
         ):
-            continue
+            raise InputValidationError(
+                f"Paired bootstrap resample {resample_index + 1} of {count} "
+                "produced a non-finite metric. No resamples were discarded."
+            )
         for model in candidates:
             for metric in metric_names:
                 metadata = reference_result.metadata["metric_specs"][metric]
@@ -437,12 +439,6 @@ def paired_bootstrap_compare(
                     reference_value, metadata
                 )
                 samples[(model, metric)].append(delta)
-    completed = len(next(iter(samples.values())))
-    if completed < count:
-        raise InputValidationError(
-            f"Only {completed} valid paired resamples could be generated after "
-            f"{attempts} attempts."
-        )
     comparisons: list[PairedMetricComparison] = []
     reference_result = point.results[reference_name]
     for model in candidates:
@@ -484,8 +480,7 @@ def paired_bootstrap_compare(
             "n_resamples": count,
             "confidence_level": confidence,
             "random_state": random_state,
-            "attempts": attempts,
-            "failed_resamples": attempts - count,
+            "undefined_resample_policy": "fail",
             "negative_objective_delta_favors_candidate": True,
             "multiple_testing_adjustment": None,
         },
@@ -537,7 +532,6 @@ def bootstrap_calibration_by_quantile(
     ).astype(np.intp)
     generator = np.random.default_rng(random_state)
     result_bins: list[CalibrationIntervalBin] = []
-    total_attempts = 0
     for point_bin in point_table.bins:
         members = np.flatnonzero((assignments == point_bin.bin) & (effective > 0))
         if not len(members):
@@ -545,26 +539,21 @@ def bootstrap_calibration_by_quantile(
         predicted_values: list[float] = []
         observed_values: list[float] = []
         ratio_values: list[float] = []
-        attempts = 0
-        max_attempts = max(count * 20, count + 100)
-        while len(ratio_values) < count and attempts < max_attempts:
-            attempts += 1
+        for resample_index in range(count):
             selected = generator.choice(members, size=len(members), replace=True)
             selected_weights = effective[selected]
             weight_total = np.sum(selected_weights)
             predicted_total = np.sum(selected_weights * validated.y_pred[selected])
             observed_total = np.sum(selected_weights * validated.y_true[selected])
             if weight_total <= 0 or predicted_total <= 0:
-                continue
+                raise InputValidationError(
+                    f"Calibration bootstrap resample {resample_index + 1} of "
+                    f"{count} is undefined in risk bin {point_bin.bin}. No "
+                    "resamples were discarded."
+                )
             predicted_values.append(float(predicted_total / weight_total))
             observed_values.append(float(observed_total / weight_total))
             ratio_values.append(float(observed_total / predicted_total))
-        total_attempts += attempts
-        if len(ratio_values) < count:
-            raise InputValidationError(
-                f"Only {len(ratio_values)} valid calibration resamples could be "
-                f"generated for risk bin {point_bin.bin} after {attempts} attempts."
-            )
         predicted_samples = np.asarray(predicted_values, dtype=np.float64)
         observed_samples = np.asarray(observed_values, dtype=np.float64)
         ratio_samples = np.asarray(ratio_values, dtype=np.float64)
@@ -598,8 +587,7 @@ def bootstrap_calibration_by_quantile(
             "method": "fixed_bin_stratified_percentile_bootstrap",
             "random_state": random_state,
             "input_scale": resolved_scale,
-            "attempts": total_attempts,
-            "failed_resamples": total_attempts - count * len(result_bins),
+            "undefined_resample_policy": "fail",
             "zero_effective_weight_rows_excluded": True,
         },
     )

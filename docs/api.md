@@ -105,7 +105,7 @@ can be negative and is never interpreted across different loss functions.
 - `bootstrap_calibration_by_quantile()` returns fixed-bin intervals for mean
   prediction, mean observation, and A/E.
 
-All row-level arrays are resampled jointly. Seeds, attempts, rejected resamples,
+All row-level arrays are resampled jointly. Seeds, undefined-resample policy,
 confidence levels, and sample counts are retained in metadata. See
 [`inference.md`](inference.md) for interpretation and limitations.
 

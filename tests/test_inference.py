@@ -110,17 +110,29 @@ def test_bootstrap_calibration_uses_fixed_bins_and_intervals(
     assert result.metadata["method"] == "fixed_bin_stratified_percentile_bootstrap"
 
 
-def test_bootstrap_calibration_retries_zero_predicted_resamples() -> None:
+def test_bootstrap_calibration_fails_on_undefined_resample() -> None:
     observed = [0, 0, 0, 1, 2, 3, 4, 5]
     predicted = [0, 0, 0, 0.1, 1, 2, 3, 4]
-    result = ae.bootstrap_calibration_by_quantile(
-        observed,
-        predicted,
-        n_bins=2,
-        n_resamples=100,
-        random_state=4,
-    )
-    assert result.metadata["failed_resamples"] >= 0
+    with pytest.raises(InputValidationError, match="No resamples were discarded"):
+        ae.bootstrap_calibration_by_quantile(
+            observed,
+            predicted,
+            n_bins=2,
+            n_resamples=100,
+            random_state=4,
+        )
+
+
+def test_bootstrap_evaluate_fails_instead_of_conditioning_on_valid_samples() -> None:
+    with pytest.raises(InputValidationError, match="No resamples were discarded"):
+        ae.bootstrap_evaluate(
+            [0, 0, 1],
+            [0.1, 0.2, 0.8],
+            task="claim_frequency",
+            metrics=["normalized_gini"],
+            n_resamples=100,
+            random_state=2,
+        )
 
 
 def test_bootstrap_supports_discrimination_lift_and_tail_metrics(

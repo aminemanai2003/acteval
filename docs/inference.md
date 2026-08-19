@@ -2,7 +2,7 @@
 
 ActEval separates point estimates from sampling uncertainty. The inference API
 uses nonparametric percentile bootstrap intervals and records its sample count,
-confidence level, seed, retry count, and method.
+confidence level, seed, undefined-resample policy, and method.
 
 ## Single-model intervals
 
@@ -11,10 +11,10 @@ exposures, and sample weights therefore remain aligned. It returns a
 `BootstrapEvaluationResult` containing the ordinary `EvaluationResult` plus one
 `ConfidenceInterval` per metric.
 
-Resamples where an estimand is undefined—for example, a normalized Gini with a
-constant outcome—are rejected and retried. Failure to obtain the requested
-number of valid resamples raises `InputValidationError`; it is never silently
-reported with a smaller sample count.
+If a resample makes an estimand undefined—for example, normalized Gini on a
+constant outcome—the run raises `InputValidationError` with the resample index.
+Undefined samples are never discarded or retried because doing so would
+condition the reported distribution on estimand validity.
 
 The default is 1,000 resamples. At least 100 are required. For final reporting,
 2,000 or more is generally preferable when computation permits.
