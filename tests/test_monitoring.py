@@ -36,6 +36,10 @@ def test_evaluate_and_compare_by_segment(
     )
     assert comparison.to_dataframe().shape == (2, 2)
     assert comparison.metadata["no_universal_best_model"] is True
+    with pytest.raises(TypeError):
+        result.segments["changed"] = result.segments["Retail"]  # type: ignore[index]
+    with pytest.raises(TypeError):
+        comparison.metadata["changed"] = True  # type: ignore[index]
 
 
 def test_segment_evaluation_skips_small_groups(

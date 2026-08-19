@@ -4,7 +4,7 @@ These functions do not define a universal actuarial objective. Every regret
 names a model decision, a benchmark decision, and a financial loss function.
 """
 
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import asdict, dataclass
 from typing import Any, Literal
 
@@ -13,7 +13,7 @@ from numpy.typing import ArrayLike
 
 from acteval.exceptions import InputValidationError
 from acteval.types import NumericArray, PredictiveDistribution
-from acteval.utils import effective_weights
+from acteval.utils import effective_weights, freeze_mapping, thaw
 from acteval.validation import (
     as_1d_float_array,
     combine_weights,
@@ -33,11 +33,21 @@ class DecisionEvaluation:
     benchmark_loss: float
     regret: float
     relative_regret: float | None
-    metadata: dict[str, Any]
+    metadata: Mapping[str, Any]
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "metadata", freeze_mapping(self.metadata))
 
     def to_dict(self) -> dict[str, Any]:
         """Return a JSON-friendly representation."""
-        return asdict(self)
+        return {
+            "decision": self.decision,
+            "model_loss": self.model_loss,
+            "benchmark_loss": self.benchmark_loss,
+            "regret": self.regret,
+            "relative_regret": self.relative_regret,
+            "metadata": thaw(self.metadata),
+        }
 
 
 @dataclass(frozen=True, slots=True)
@@ -95,10 +105,15 @@ class ReinsuranceSelection:
     """Selected quoted option and modeled cost by option."""
 
     selected: ReinsuranceOption
-    projected_costs: dict[str, float]
+    projected_costs: Mapping[str, float]
     risk_measure: str
     risk_quantile: float
     capital_cost_rate: float
+
+    def __post_init__(self) -> None:
+        object.__setattr__(
+            self, "projected_costs", freeze_mapping(self.projected_costs)
+        )
 
     def to_dict(self) -> dict[str, Any]:
         """Return a JSON-friendly representation."""

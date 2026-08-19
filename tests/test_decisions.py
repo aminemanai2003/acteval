@@ -30,6 +30,8 @@ def test_decision_regret_can_be_negative_and_weighted() -> None:
     assert result.model_loss == pytest.approx(0)
     assert result.regret < 0
     assert result.metadata["regret_can_be_negative"] is True
+    with pytest.raises(TypeError):
+        result.metadata["changed"] = True  # type: ignore[index]
 
 
 def test_zero_benchmark_loss_omits_relative_regret() -> None:
@@ -102,6 +104,8 @@ def test_expected_shortfall_handles_discrete_boundary_mass() -> None:
     assert selection.selected == cover
     assert selection.projected_costs["no cover"] == pytest.approx(21, rel=0.08)
     assert selection.projected_costs["cover"] == pytest.approx(5)
+    with pytest.raises(TypeError):
+        selection.projected_costs["changed"] = 1.0  # type: ignore[index]
 
 
 def test_reinsurance_selection_known_tradeoff() -> None:

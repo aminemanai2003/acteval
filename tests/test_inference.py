@@ -47,6 +47,10 @@ def test_bootstrap_evaluate_is_reproducible_and_contains_point_estimate(
     assert first.intervals["rmse"].lower <= first.intervals["rmse"].upper
     assert first.to_dataframe().shape == (2, 7)
     assert "rmse" in first.summary()
+    with pytest.raises(TypeError):
+        first.metadata["changed"] = True  # type: ignore[index]
+    with pytest.raises(TypeError):
+        first.intervals["changed"] = first.intervals["rmse"]  # type: ignore[index]
 
 
 def test_paired_bootstrap_compare_uses_objective_aware_delta(

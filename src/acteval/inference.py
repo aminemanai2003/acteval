@@ -13,7 +13,7 @@ from acteval.exceptions import ActEvalError, InputValidationError
 from acteval.metrics import calibration_by_quantile
 from acteval.reports import EvaluationResult
 from acteval.types import NumericArray, Task
-from acteval.utils import risk_bin_indices
+from acteval.utils import freeze_mapping, risk_bin_indices, thaw
 from acteval.validation import (
     combine_weights,
     validate_input_scale,
@@ -48,8 +48,12 @@ class BootstrapEvaluationResult:
 
     task: Task
     point_estimate: EvaluationResult
-    intervals: dict[str, ConfidenceInterval]
-    metadata: dict[str, Any]
+    intervals: Mapping[str, ConfidenceInterval]
+    metadata: Mapping[str, Any]
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "intervals", freeze_mapping(self.intervals))
+        object.__setattr__(self, "metadata", freeze_mapping(self.metadata))
 
     def to_dict(self) -> dict[str, Any]:
         """Return a JSON-friendly representation."""
@@ -61,7 +65,7 @@ class BootstrapEvaluationResult:
                 metric: interval.to_dict()
                 for metric, interval in self.intervals.items()
             },
-            "metadata": dict(self.metadata),
+            "metadata": thaw(self.metadata),
         }
 
     def to_dataframe(self) -> Any:
@@ -125,7 +129,10 @@ class PairedComparisonResult:
     task: Task
     reference: str
     comparisons: tuple[PairedMetricComparison, ...]
-    metadata: dict[str, Any]
+    metadata: Mapping[str, Any]
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "metadata", freeze_mapping(self.metadata))
 
     def to_dict(self) -> dict[str, Any]:
         """Return a JSON-friendly representation."""
@@ -134,7 +141,7 @@ class PairedComparisonResult:
             "task": self.task,
             "reference": self.reference,
             "comparisons": [comparison.to_dict() for comparison in self.comparisons],
-            "metadata": dict(self.metadata),
+            "metadata": thaw(self.metadata),
         }
 
     def to_dataframe(self) -> Any:
@@ -183,7 +190,10 @@ class CalibrationIntervalTable:
     requested_bins: int
     confidence_level: float
     n_resamples: int
-    metadata: dict[str, Any]
+    metadata: Mapping[str, Any]
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "metadata", freeze_mapping(self.metadata))
 
     @property
     def effective_bins(self) -> int:

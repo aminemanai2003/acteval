@@ -11,7 +11,7 @@ from acteval.api import MetricSelection, compare, evaluate
 from acteval.exceptions import InputValidationError
 from acteval.reports import ComparisonResult, EvaluationResult
 from acteval.types import NumericArray, Task
-from acteval.utils import weighted_quantile
+from acteval.utils import freeze_mapping, thaw, weighted_quantile
 from acteval.validation import combine_weights, validate_inputs
 
 ObjectArray = NDArray[np.object_]
@@ -23,8 +23,12 @@ class SegmentEvaluationResult:
     """Metric results split by a caller-supplied portfolio segment."""
 
     task: Task
-    segments: dict[str, EvaluationResult]
-    metadata: dict[str, Any]
+    segments: Mapping[str, EvaluationResult]
+    metadata: Mapping[str, Any]
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "segments", freeze_mapping(self.segments))
+        object.__setattr__(self, "metadata", freeze_mapping(self.metadata))
 
     def to_dict(self) -> dict[str, Any]:
         """Return a JSON-friendly representation."""
@@ -34,7 +38,7 @@ class SegmentEvaluationResult:
             "segments": {
                 segment: result.to_dict() for segment, result in self.segments.items()
             },
-            "metadata": dict(self.metadata),
+            "metadata": thaw(self.metadata),
         }
 
     def to_dataframe(self) -> Any:
@@ -60,8 +64,12 @@ class SegmentComparisonResult:
     """Multi-model comparisons repeated consistently within each segment."""
 
     task: Task
-    segments: dict[str, ComparisonResult]
-    metadata: dict[str, Any]
+    segments: Mapping[str, ComparisonResult]
+    metadata: Mapping[str, Any]
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "segments", freeze_mapping(self.segments))
+        object.__setattr__(self, "metadata", freeze_mapping(self.metadata))
 
     def to_dict(self) -> dict[str, Any]:
         """Return a JSON-friendly representation."""
@@ -71,7 +79,7 @@ class SegmentComparisonResult:
             "segments": {
                 segment: result.to_dict() for segment, result in self.segments.items()
             },
-            "metadata": dict(self.metadata),
+            "metadata": thaw(self.metadata),
         }
 
     def to_dataframe(self) -> Any:
@@ -97,9 +105,13 @@ class TemporalEvaluationResult:
     """Chronologically ordered metric results and changes from baseline."""
 
     task: Task
-    periods: dict[str, EvaluationResult]
+    periods: Mapping[str, EvaluationResult]
     baseline_period: str
-    metadata: dict[str, Any]
+    metadata: Mapping[str, Any]
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "periods", freeze_mapping(self.periods))
+        object.__setattr__(self, "metadata", freeze_mapping(self.metadata))
 
     def to_dict(self) -> dict[str, Any]:
         """Return a JSON-friendly representation."""
@@ -110,7 +122,7 @@ class TemporalEvaluationResult:
             "periods": {
                 period: result.to_dict() for period, result in self.periods.items()
             },
-            "metadata": dict(self.metadata),
+            "metadata": thaw(self.metadata),
         }
 
     def to_dataframe(self) -> Any:
@@ -161,7 +173,10 @@ class PredictionDriftResult:
     mean_shift: float
     relative_mean_shift: float | None
     bins: tuple[DriftBin, ...]
-    metadata: dict[str, Any]
+    metadata: Mapping[str, Any]
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "metadata", freeze_mapping(self.metadata))
 
     def to_dict(self) -> dict[str, Any]:
         """Return a JSON-friendly representation."""
@@ -173,7 +188,7 @@ class PredictionDriftResult:
             "mean_shift": self.mean_shift,
             "relative_mean_shift": self.relative_mean_shift,
             "bins": [asdict(bin_result) for bin_result in self.bins],
-            "metadata": dict(self.metadata),
+            "metadata": thaw(self.metadata),
         }
 
     def to_dataframe(self) -> Any:
