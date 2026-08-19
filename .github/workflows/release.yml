@@ -21,7 +21,7 @@ jobs:
       - run: python -m pip check
       - run: ruff check .
       - run: ruff format --check .
-      - run: mypy src/acteval
+      - run: mypy --python-version "3.14" src/acteval
       - run: pytest
       - run: python -m build
       - run: python -m twine check dist/*
