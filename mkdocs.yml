@@ -1,0 +1,28 @@
+site_name: ActEval
+site_description: Insurance-oriented metrics and reports for prediction arrays
+site_url: https://aminemanai2003.github.io/acteval/
+repo_url: https://github.com/aminemanai2003/acteval
+repo_name: aminemanai2003/acteval
+edit_uri: edit/main/docs/
+
+theme:
+  name: readthedocs
+  locale: en
+
+plugins:
+  - search
+
+nav:
+  - Home: index.md
+  - API guide: api.md
+  - Metric reference: metric-reference.md
+  - Bootstrap inference: inference.md
+  - Monitoring: monitoring.md
+  - Reporting and export: reporting.md
+  - Realized-consequence helpers: decision-reference.md
+  - Compatibility policy: stability.md
+  - Migration:
+      - Version 2.0: migration-2.0.md
+      - Version 1.0: migration-1.0.md
+
+strict: true

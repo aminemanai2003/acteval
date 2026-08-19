@@ -3,6 +3,7 @@
 [![PyPI version](https://img.shields.io/pypi/v/acteval-insurance.svg)](https://pypi.org/project/acteval-insurance/)
 [![Python versions](https://img.shields.io/pypi/pyversions/acteval-insurance.svg)](https://pypi.org/project/acteval-insurance/)
 [![CI](https://github.com/aminemanai2003/acteval/actions/workflows/ci.yml/badge.svg)](https://github.com/aminemanai2003/acteval/actions/workflows/ci.yml)
+[![Documentation](https://img.shields.io/badge/docs-GitHub%20Pages-blue.svg)](https://aminemanai2003.github.io/acteval/)
 [![License](https://img.shields.io/pypi/l/acteval-insurance.svg)](https://github.com/aminemanai2003/acteval/blob/main/LICENSE)
 
 **Model-agnostic evaluation for actuarial predictive models.**
@@ -331,6 +332,7 @@ result as one evidence artifact rather than a governance decision.
 
 ## Documentation
 
+- [Documentation website](https://aminemanai2003.github.io/acteval/)
 - [API guide](https://github.com/aminemanai2003/acteval/blob/main/docs/api.md)
 - [Metric reference](https://github.com/aminemanai2003/acteval/blob/main/docs/metric-reference.md)
 - [Bootstrap inference](https://github.com/aminemanai2003/acteval/blob/main/docs/inference.md)
@@ -352,6 +354,7 @@ ruff check .
 ruff format --check .
 mypy src/acteval
 pytest
+mkdocs build --strict
 python -m build
 ```
 
