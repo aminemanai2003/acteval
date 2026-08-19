@@ -1,4 +1,8 @@
-# API stability policy
+# API compatibility policy
+
+This policy describes software compatibility only. ActEval remains beta, and
+this policy is not a claim of production readiness, actuarial validation, or
+fitness for a regulated use.
 
 ActEval follows Semantic Versioning beginning with version 1.0.0.
 

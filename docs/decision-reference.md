@@ -1,5 +1,9 @@
 # Decision-aware reference
 
+> These functions are illustrative realized-consequence calculations. They are
+> not pricing, reserving, treaty, solvency, or regulatory-capital models, and
+> they do not supply governance thresholds or prospective validation.
+
 ActEval's decision layer implements the architecture
 
 ```text

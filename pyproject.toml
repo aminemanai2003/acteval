@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "acteval-insurance"
 dynamic = ["version"]
-description = "Model-agnostic evaluation of actuarial predictive models"
+description = "Insurance-oriented metrics and reports for prediction arrays"
 readme = "README.md"
 requires-python = ">=3.11"
 license = "Apache-2.0"
@@ -15,7 +15,7 @@ authors = [
 ]
 keywords = ["actuarial", "insurance", "model-evaluation", "calibration"]
 classifiers = [
-  "Development Status :: 5 - Production/Stable",
+  "Development Status :: 4 - Beta",
   "Intended Audience :: Financial and Insurance Industry",
   "License :: OSI Approved :: Apache Software License",
   "Programming Language :: Python :: 3",
@@ -23,7 +23,6 @@ classifiers = [
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
   "Programming Language :: Python :: 3.14",
-  "Typing :: Typed",
 ]
 dependencies = [
   "numpy>=1.26",

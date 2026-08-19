@@ -186,7 +186,7 @@ def test_high_level_api_requires_explicit_rate_scale_with_exposure() -> None:
 
 
 def test_public_api_exports_are_resolvable_and_version_is_stable() -> None:
-    assert ae.__version__ == "1.0.0"
+    assert ae.__version__ == "2.0.0"
     assert ae.__all__
     assert len(ae.__all__) == len(set(ae.__all__))
     assert all(hasattr(ae, name) for name in ae.__all__)

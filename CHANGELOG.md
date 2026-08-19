@@ -1,5 +1,23 @@
 # Changelog
 
+## 2.0.0 - 2026-08-19
+
+### Correctness and scope corrections
+
+- Corrected empirical expected-shortfall integration, tied tail selection, and
+  tied model ranking.
+- Separated mean- and median-target metrics and removed arbitrary tail and
+  Tweedie-power defaults.
+- Required explicit rate scale when exposure weighting is applied.
+- Made undefined bootstrap resamples fail closed instead of discarding them.
+- Made result containers deeply immutable and JSON export standards-compliant.
+- Added runtime versions, numerical input fingerprints, and caller provenance
+  context to evaluation metadata.
+- Moved numerical Tweedie distribution support to an optional dependency.
+- Gated publication on the complete quality suite and pinned workflow actions.
+- Corrected the maturity classifier to Beta and narrowed decision-layer claims
+  to illustrative realized-consequence calculations.
+
 ## 1.0.0 - 2026-08-12
 
 ### Stable API and packaging

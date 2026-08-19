@@ -4,7 +4,6 @@
 [![Python versions](https://img.shields.io/pypi/pyversions/acteval-insurance.svg)](https://pypi.org/project/acteval-insurance/)
 [![CI](https://github.com/aminemanai2003/acteval/actions/workflows/ci.yml/badge.svg)](https://github.com/aminemanai2003/acteval/actions/workflows/ci.yml)
 [![License](https://img.shields.io/pypi/l/acteval-insurance.svg)](https://github.com/aminemanai2003/acteval/blob/main/LICENSE)
-[![Typed](https://img.shields.io/badge/typing-typed-blue.svg)](https://peps.python.org/pep-0561/)
 
 **Model-agnostic evaluation for actuarial predictive models.**
 
@@ -21,7 +20,8 @@ score.
 
 A model with lower RMSE can still have worse aggregate calibration, weaker
 large-loss behavior, or a less favorable pricing consequence. ActEval makes
-those trade-offs visible through explicit metrics and reproducible metadata.
+those trade-offs visible through explicit metrics and versioned evaluation
+metadata.
 
 | Capability | Included diagnostics |
 |---|---|
@@ -33,7 +33,7 @@ those trade-offs visible through explicit metrics and reproducible metadata.
 | Uncertainty | Coverage, width, variance, entropy, bootstrap intervals |
 | Model comparison | Metric-specific ranking and paired bootstrap differences |
 | Monitoring | Segment reports, temporal validation, prediction drift/PSI |
-| Decisions | Pricing regret, loss ratio, reserve/capital shortfall, reinsurance |
+| Realized consequences | Explicit pricing loss, shortfall, and quoted reinsurance arithmetic |
 | Reporting | DataFrame, dictionary, CSV, JSON, HTML, and plot export |
 
 ## Installation
@@ -146,7 +146,6 @@ from their target; ActEval does not declare one model universally best.
 
 ## Quantify sampling uncertainty
 
-Version 1.0 includes the inference layer introduced for the v0.4 roadmap.
 Rows, predictions, exposures, and weights are resampled jointly.
 
 ```python
@@ -253,10 +252,10 @@ Samples have shape `(n_samples, n_observations)`. Scalar quantiles have shape
 `(n_observations,)`; vector quantiles have shape
 `(n_quantiles, n_observations)`.
 
-## Decision-aware evaluation
+## Illustrative realized-consequence helpers
 
-Financial decisions always expose their loss function and named benchmark.
-Regret is reported in the financial loss function's unit.
+These small helpers expose their loss function and named benchmark. Regret is
+reported in that loss function's unit.
 
 ```python
 premiums = ae.premium_from_distribution(
@@ -275,9 +274,9 @@ pricing = ae.pricing_regret(
 )
 ```
 
-ActEval also provides loss-ratio impact, reserve and capital shortfall, and
-quoted stop-loss reinsurance selection. These are explicit decision models,
-not interchangeable measures of predictive accuracy.
+ActEval also provides loss-ratio impact, shortfall arithmetic, and quoted
+stop-loss option selection. These are illustrative realized-consequence
+calculations, not pricing, reserving, treaty, or regulatory-capital models.
 
 ## Reports and exports
 
@@ -302,13 +301,33 @@ offline review.
 
 - `y_true` and `y_pred` are finite, one-dimensional, nonnegative arrays on the
   same scale.
-- Frequency and pure-premium rates should be supplied with policy exposure.
+- Frequency and pure-premium rates supplied with policy exposure must set
+  `input_scale="rate"`; aggregate counts or losses must omit exposure.
 - Severity observations are normally claim-level; `sample_weight` is often
   more meaningful than exposure.
 - When both are present, effective weight is `sample_weight * exposure`.
 - ActEval does not silently convert claim counts to rates.
 - Observed-tail diagnostics select rows using realized outcomes and are
   retrospective—not predictive tail probabilities.
+
+## Scope and limitations
+
+ActEval is an insurance-oriented metric and reporting toolkit. It is not a
+complete model-validation or governance system. In particular:
+
+- it evaluates caller-supplied holdout predictions and cannot detect leakage,
+  an invalid train/test split, or unrepresentative data;
+- risk-quantile and caller-defined segment reports do not replace feature-aware
+  conditional calibration diagnostics;
+- the IID bootstrap does not refit models and does not handle clusters, time
+  dependence, or multiplicity automatically;
+- no claim of production readiness or empirical superiority is made from the
+  synthetic examples and unit tests in this repository;
+- thresholds, Tweedie powers, tail levels, financial loss functions, and
+  deployment decisions remain portfolio- and governance-specific.
+
+Use the `context` argument to record model and split identifiers, but treat the
+result as one evidence artifact rather than a governance decision.
 
 ## Documentation
 
@@ -320,6 +339,7 @@ offline review.
 - [Decision reference](https://github.com/aminemanai2003/acteval/blob/main/docs/decision-reference.md)
 - [API stability policy](https://github.com/aminemanai2003/acteval/blob/main/docs/stability.md)
 - [Migrating from 0.3 to 1.0](https://github.com/aminemanai2003/acteval/blob/main/docs/migration-1.0.md)
+- [Migrating from 1.x to 2.0](https://github.com/aminemanai2003/acteval/blob/main/docs/migration-2.0.md)
 
 ## Development
 
@@ -341,7 +361,8 @@ before opening a pull request or reporting a vulnerability.
 
 ## Versioning and license
 
-ActEval follows Semantic Versioning from 1.0 onward. Public compatibility and
-deprecation guarantees are documented in the stability policy.
+ActEval uses Semantic Versioning for its public API. Package maturity remains
+beta; compatibility rules do not imply actuarial validation or production
+readiness.
 
 Licensed under the [Apache License 2.0](https://github.com/aminemanai2003/acteval/blob/main/LICENSE).
