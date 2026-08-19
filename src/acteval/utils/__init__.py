@@ -5,5 +5,13 @@ from acteval.utils.arrays import (
     risk_bin_indices,
     weighted_quantile,
 )
+from acteval.utils.immutability import freeze, freeze_mapping, thaw
 
-__all__ = ["effective_weights", "risk_bin_indices", "weighted_quantile"]
+__all__ = [
+    "effective_weights",
+    "freeze",
+    "freeze_mapping",
+    "risk_bin_indices",
+    "thaw",
+    "weighted_quantile",
+]

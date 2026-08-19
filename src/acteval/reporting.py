@@ -1,6 +1,8 @@
 """Dependency-light export and standalone HTML reporting utilities."""
 
 import json
+import math
+from collections.abc import Mapping
 from html import escape
 from pathlib import Path
 from typing import Any, Protocol
@@ -31,6 +33,19 @@ pre { background: #f6f8fa; border: 1px solid #d8dee9; border-radius: 6px;
 """.strip()
 
 
+def _json_safe(value: Any) -> Any:
+    """Replace non-finite floats with explicit JSON string values."""
+    if isinstance(value, float) and not math.isfinite(value):
+        if math.isnan(value):
+            return "NaN"
+        return "Infinity" if value > 0 else "-Infinity"
+    if isinstance(value, Mapping):
+        return {str(key): _json_safe(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_json_safe(item) for item in value]
+    return value
+
+
 def render_html_report(
     result: TabularResult,
     *,
@@ -50,8 +65,12 @@ def render_html_report(
     if include_metadata:
         metadata = payload.get("metadata", {}) if isinstance(payload, dict) else {}
         metadata_html = (
-            "<h2>Reproducibility metadata</h2><pre>"
-            + escape(json.dumps(metadata, indent=2, sort_keys=True, default=str))
+            "<h2>Evaluation metadata</h2><pre>"
+            + escape(
+                json.dumps(
+                    _json_safe(metadata), indent=2, sort_keys=True, allow_nan=False
+                )
+            )
             + "</pre>"
         )
     safe_title = escape(title)
@@ -105,7 +124,8 @@ def export_table(
         result.to_dataframe().to_csv(destination)
     elif resolved_format == "json":
         destination.write_text(
-            json.dumps(result.to_dict(), indent=2, default=str), encoding="utf-8"
+            json.dumps(_json_safe(result.to_dict()), indent=2, allow_nan=False),
+            encoding="utf-8",
         )
     else:
         destination.write_text(render_html_report(result), encoding="utf-8")

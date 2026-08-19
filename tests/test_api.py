@@ -205,3 +205,28 @@ def test_metric_signature_validation_is_cached(
     second = _metric_signature.cache_info()
     assert first.misses == 1
     assert second.hits == first.hits + 1
+
+
+def test_results_and_metric_specs_are_deeply_immutable_and_detached() -> None:
+    parameters = {"quantile": 0.9}
+    specification = ae.MetricSpec("tail_mae", parameters)
+    parameters["quantile"] = 0.8
+    assert specification.parameters["quantile"] == pytest.approx(0.9)
+    with pytest.raises(TypeError):
+        specification.parameters["quantile"] = 0.7  # type: ignore[index]
+
+    metrics = {"rmse": 1.0}
+    metadata: dict[str, object] = {"metric_specs": {"rmse": {"parameters": {}}}}
+    result = ae.EvaluationResult("claim_frequency", metrics, metadata)
+    metrics["rmse"] = 2.0
+    mutable_specs = metadata["metric_specs"]
+    assert isinstance(mutable_specs, dict)
+    mutable_specs["rmse"]["parameters"]["changed"] = True
+    assert result.metrics["rmse"] == pytest.approx(1.0)
+    assert "changed" not in result.metadata["metric_specs"]["rmse"]["parameters"]
+    with pytest.raises(TypeError):
+        result.metadata["metric_specs"]["rmse"]["parameters"]["changed"] = True
+
+    detached = result.to_dict()
+    detached["metadata"]["metric_specs"]["rmse"]["parameters"]["changed"] = True
+    assert "changed" not in result.metadata["metric_specs"]["rmse"]["parameters"]

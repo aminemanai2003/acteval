@@ -1,11 +1,12 @@
 """Single-model evaluation result."""
 
-from copy import deepcopy
+from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 from acteval.types import Task
+from acteval.utils import freeze_mapping, thaw
 
 
 @dataclass(frozen=True, slots=True)
@@ -13,15 +14,20 @@ class EvaluationResult:
     """Metrics and reproducibility metadata for one prediction array."""
 
     task: Task
-    metrics: dict[str, float]
-    metadata: dict[str, Any]
+    metrics: Mapping[str, float]
+    metadata: Mapping[str, Any]
+
+    def __post_init__(self) -> None:
+        """Detach and recursively freeze caller-owned containers."""
+        object.__setattr__(self, "metrics", freeze_mapping(self.metrics))
+        object.__setattr__(self, "metadata", freeze_mapping(self.metadata))
 
     def to_dict(self) -> dict[str, Any]:
         """Return a detached JSON-friendly representation."""
         return {
             "task": self.task,
-            "metrics": dict(self.metrics),
-            "metadata": deepcopy(self.metadata),
+            "metrics": thaw(self.metrics),
+            "metadata": thaw(self.metadata),
         }
 
     def to_dataframe(self) -> Any:

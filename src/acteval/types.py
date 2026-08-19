@@ -2,6 +2,7 @@
 
 from collections.abc import Mapping
 from dataclasses import dataclass, field
+from types import MappingProxyType
 from typing import Literal, Protocol
 
 import numpy as np
@@ -30,7 +31,7 @@ class MetricSpec:
         if not normalized_name:
             raise ValueError("MetricSpec name must not be empty.")
         object.__setattr__(self, "name", normalized_name)
-        object.__setattr__(self, "parameters", dict(self.parameters))
+        object.__setattr__(self, "parameters", MappingProxyType(dict(self.parameters)))
         if self.label is not None:
             normalized_label = self.label.strip()
             if not normalized_label:

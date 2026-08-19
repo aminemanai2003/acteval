@@ -1,5 +1,6 @@
 """Multi-model evaluation result."""
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -7,6 +8,7 @@ from typing import Any
 from acteval.exceptions import InputValidationError
 from acteval.reports.result import EvaluationResult
 from acteval.types import Task
+from acteval.utils import freeze_mapping, thaw
 
 
 @dataclass(frozen=True, slots=True)
@@ -14,8 +16,13 @@ class ComparisonResult:
     """Aligned evaluation results for several prediction arrays."""
 
     task: Task
-    results: dict[str, EvaluationResult]
-    metadata: dict[str, Any]
+    results: Mapping[str, EvaluationResult]
+    metadata: Mapping[str, Any]
+
+    def __post_init__(self) -> None:
+        """Detach and freeze result and metadata mappings."""
+        object.__setattr__(self, "results", freeze_mapping(self.results))
+        object.__setattr__(self, "metadata", freeze_mapping(self.metadata))
 
     def to_dict(self) -> dict[str, Any]:
         """Return a JSON-friendly nested representation."""
@@ -24,7 +31,7 @@ class ComparisonResult:
             "models": {
                 model: result.to_dict() for model, result in self.results.items()
             },
-            "metadata": dict(self.metadata),
+            "metadata": thaw(self.metadata),
         }
 
     def to_dataframe(self) -> Any:
@@ -32,7 +39,7 @@ class ComparisonResult:
         import pandas as pd
 
         frame = pd.DataFrame(
-            {model: result.metrics for model, result in self.results.items()}
+            {model: dict(result.metrics) for model, result in self.results.items()}
         )
         frame.index.name = "metric"
         return frame

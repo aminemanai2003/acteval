@@ -16,7 +16,7 @@ def test_standalone_html_report_escapes_title_and_contains_metadata(
     html = result.to_html(title="<ActEval & report>")
     assert "<!doctype html>" in html
     assert "&lt;ActEval &amp; report&gt;" in html
-    assert "Reproducibility metadata" in html
+    assert "Evaluation metadata" in html
     assert "universal best model" in html
     destination = result.save_html(tmp_path / "reports" / "evaluation.html")
     assert destination.exists()
@@ -53,3 +53,20 @@ def test_save_plot(tmp_path: Path) -> None:
         ae.save_plot(axis, tmp_path / "bad.png", dpi=0)
     with pytest.raises(TypeError, match="Matplotlib axis"):
         ae.save_plot(object(), tmp_path / "bad.png")
+
+
+def test_json_export_is_strict_for_nonfinite_metric_values(tmp_path: Path) -> None:
+    result = ae.EvaluationResult(
+        "claim_frequency",
+        {"positive": float("inf"), "negative": float("-inf"), "nan": float("nan")},
+        {},
+    )
+    path = ae.export_table(result, tmp_path / "nonfinite.json")
+    raw = path.read_text(encoding="utf-8")
+    assert ": Infinity" not in raw
+    assert ": NaN" not in raw
+    assert json.loads(raw)["metrics"] == {
+        "positive": "Infinity",
+        "negative": "-Infinity",
+        "nan": "NaN",
+    }
