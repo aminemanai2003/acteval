@@ -113,3 +113,7 @@ def test_distribution_rejects_invalid_shapes_and_quantiles() -> None:
     empirical = ae.EmpiricalDistribution([[1, 2], [2, 3]])
     with pytest.raises(InputValidationError, match="between 0 and 1"):
         empirical.quantile(0)
+    with pytest.raises(InputValidationError, match="finite"):
+        distribution.cdf(float("nan"))
+    with pytest.raises(InputValidationError, match="between 0 and 1"):
+        empirical.quantile(float("nan"))

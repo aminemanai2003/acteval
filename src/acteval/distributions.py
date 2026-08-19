@@ -42,6 +42,8 @@ def _broadcast_parameters(*parameters: NumericArray) -> tuple[NumericArray, ...]
 def _observations(values: ArrayLike, *, length: int, name: str) -> NumericArray:
     array = np.asarray(values, dtype=np.float64)
     if array.ndim == 0:
+        if not np.isfinite(array):
+            raise InputValidationError(f"{name} must contain only finite values.")
         return np.full(length, float(array), dtype=np.float64)
     if array.ndim != 1 or len(array) != length:
         raise InputValidationError(f"{name} must be scalar or have length {length}.")
@@ -328,8 +330,10 @@ class EmpiricalDistribution:
 
     def quantile(self, q: ArrayLike) -> NumericArray:
         probabilities = np.asarray(q, dtype=np.float64)
-        if probabilities.ndim > 1 or np.any(
-            (probabilities <= 0) | (probabilities >= 1)
+        if (
+            probabilities.ndim > 1
+            or not np.all(np.isfinite(probabilities))
+            or np.any((probabilities <= 0) | (probabilities >= 1))
         ):
             raise InputValidationError(
                 "q must be a scalar or vector strictly between 0 and 1."
@@ -426,8 +430,10 @@ class TweedieDistribution:
 
     def quantile(self, q: ArrayLike) -> NumericArray:
         probabilities = np.asarray(q, dtype=np.float64)
-        if probabilities.ndim > 1 or np.any(
-            (probabilities <= 0) | (probabilities >= 1)
+        if (
+            probabilities.ndim > 1
+            or not np.all(np.isfinite(probabilities))
+            or np.any((probabilities <= 0) | (probabilities >= 1))
         ):
             raise InputValidationError(
                 "q must be a scalar or vector strictly between 0 and 1."

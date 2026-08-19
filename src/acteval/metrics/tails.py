@@ -32,14 +32,15 @@ def _tail_inputs(
     if threshold is None:
         selected_quantile = 0.95 if quantile is None else quantile
         cutoff = weighted_quantile(inputs.y_true, selected_quantile, weights)
+        mask = (inputs.y_true >= cutoff) & (weights > 0)
     else:
         if not np.isfinite(threshold) or threshold < 0:
             raise InputValidationError("threshold must be finite and nonnegative.")
         cutoff = float(threshold)
-    mask = (inputs.y_true > cutoff) & (weights > 0)
+        mask = (inputs.y_true > cutoff) & (weights > 0)
     if not np.any(mask):
         raise InputValidationError(
-            f"No positive-weight observations are strictly above threshold {cutoff}."
+            f"No positive-weight observations satisfy the tail cutoff {cutoff}."
         )
     return inputs.y_true[mask], inputs.y_pred[mask], weights[mask], cutoff
 
@@ -60,7 +61,11 @@ def tail_mae(
     sample_weight: ArrayLike | None = None,
     exposure: ArrayLike | None = None,
 ) -> float:
-    """Compute weighted MAE for observations strictly above the tail cutoff."""
+    """Compute weighted MAE in the selected observed tail.
+
+    Absolute thresholds use a strict boundary. Quantile cutoffs include the
+    boundary atom so discrete claim outcomes always produce a populated tail.
+    """
     observed, predicted, weights, _ = _tail_inputs(
         y_true,
         y_pred,
@@ -88,7 +93,7 @@ def tail_rmse(
     sample_weight: ArrayLike | None = None,
     exposure: ArrayLike | None = None,
 ) -> float:
-    """Compute weighted RMSE for observations strictly above the tail cutoff."""
+    """Compute weighted RMSE in the selected observed tail."""
     observed, predicted, weights, _ = _tail_inputs(
         y_true,
         y_pred,
@@ -119,8 +124,9 @@ def tail_ae_ratio(
 ) -> float:
     """Compute actual-to-expected ratio in the observed tail.
 
-    Selection uses ``y_true > cutoff``. Values above one indicate tail
-    underprediction. This direction is consistent with aggregate ``ae_ratio``.
+    Absolute thresholds use ``y_true > cutoff``; quantile cutoffs include the
+    boundary atom. Values above one indicate tail underprediction. This
+    direction is consistent with aggregate ``ae_ratio``.
     """
     observed, predicted, weights, _ = _tail_inputs(
         y_true,

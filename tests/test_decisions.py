@@ -83,6 +83,27 @@ def test_quantile_decision() -> None:
     assert np.all(decision > distribution.mean())
 
 
+def test_expected_shortfall_handles_discrete_boundary_mass() -> None:
+    samples = np.asarray([[0.0]] * 990 + [[100.0]] * 10)
+    distribution = ae.EmpiricalDistribution(samples)
+    no_cover = ae.ReinsuranceOption("no cover", retention=100, premium=0)
+    cover = ae.ReinsuranceOption("cover", retention=0, premium=5)
+
+    selection = ae.select_reinsurance_option(
+        distribution,
+        [no_cover, cover],
+        risk_measure="expected_shortfall",
+        risk_quantile=0.95,
+        capital_cost_rate=1,
+        n_samples=100_000,
+        random_state=7,
+    )
+
+    assert selection.selected == cover
+    assert selection.projected_costs["no cover"] == pytest.approx(21, rel=0.08)
+    assert selection.projected_costs["cover"] == pytest.approx(5)
+
+
 def test_reinsurance_selection_known_tradeoff() -> None:
     distribution = ae.EmpiricalDistribution(
         np.asarray([[0], [20], [40], [60], [80], [100]], dtype=float)

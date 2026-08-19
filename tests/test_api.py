@@ -98,6 +98,18 @@ def test_identical_models_produce_identical_metrics(
         task="claim_frequency",
     )
     assert comparison.results["A"].metrics == comparison.results["B"].metrics
+    ranking = comparison.rank("rmse")
+    assert ranking.loc[ranking["model"] == "A", "rank"].item() == 1
+    assert ranking.loc[ranking["model"] == "B", "rank"].item() == 1
+
+
+def test_default_frequency_evaluation_supports_tied_maximum_counts() -> None:
+    result = ae.evaluate(
+        [0, 0, 1, 1],
+        [0.1, 0.2, 0.8, 0.9],
+        task="claim_frequency",
+    )
+    assert result.metrics["tail_mae_95"] == pytest.approx(0.15)
 
 
 @pytest.mark.parametrize("task", ["", "frequency", "unknown"])

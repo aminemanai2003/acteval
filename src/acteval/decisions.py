@@ -393,14 +393,25 @@ def quantile_decision(
 
 
 def _tail_mean(samples: NumericArray, quantile: float) -> NumericArray:
-    cutoffs = np.quantile(samples, quantile, axis=0)
-    return np.asarray(
-        [
-            np.mean(samples[samples[:, column] >= cutoffs[column], column])
-            for column in range(samples.shape[1])
-        ],
-        dtype=np.float64,
-    )
+    """Return empirical expected shortfall with fractional boundary mass.
+
+    Averaging every value at or above VaR is only equivalent to expected
+    shortfall for continuous distributions.  Insurance losses commonly have
+    atoms, so integrate the empirical quantile function over the requested
+    upper tail instead.  Fractional boundary weight makes the result coherent
+    even when ``(1 - quantile) * n_samples`` is not an integer.
+    """
+    ordered = np.sort(samples, axis=0)
+    tail_mass = (1.0 - quantile) * len(ordered)
+    full_count = int(np.floor(tail_mass))
+    boundary_weight = tail_mass - full_count
+    totals = np.zeros(ordered.shape[1], dtype=np.float64)
+    if full_count:
+        totals += np.sum(ordered[-full_count:], axis=0)
+    if boundary_weight:
+        boundary_index = len(ordered) - full_count - 1
+        totals += boundary_weight * ordered[boundary_index]
+    return totals / tail_mass
 
 
 def select_reinsurance_option(

@@ -59,10 +59,18 @@ class ComparisonResult:
         direction = details.get("higher_is_better")
         if target is not None:
             ranking["distance_to_target"] = (ranking["value"] - target).abs()
+            ranking["rank"] = (
+                ranking["distance_to_target"]
+                .rank(method="min", ascending=True)
+                .astype(int)
+            )
             ranking = ranking.sort_values(
                 ["distance_to_target", "model"], kind="stable"
             )
         elif direction is not None:
+            ranking["rank"] = (
+                ranking["value"].rank(method="min", ascending=not direction).astype(int)
+            )
             ranking = ranking.sort_values(
                 ["value", "model"], ascending=[not direction, True], kind="stable"
             )
@@ -71,7 +79,6 @@ class ComparisonResult:
                 f"Metric {metric!r} has neither an optimization direction nor target."
             )
         ranking = ranking.reset_index(drop=True)
-        ranking["rank"] = ranking.index + 1
         return ranking
 
     def to_html(self, *, title: str = "ActEval model comparison") -> str:

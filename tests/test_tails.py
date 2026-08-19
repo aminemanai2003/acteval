@@ -29,6 +29,10 @@ def test_tail_quantile_defaults_to_95_percent() -> None:
     assert tail_mae(observed, predicted) == pytest.approx(1)
 
 
+def test_tail_quantile_includes_discrete_boundary_atom() -> None:
+    assert tail_mae([0, 0, 1, 1], [0.1, 0.2, 0.8, 0.9]) == pytest.approx(0.15)
+
+
 def test_tail_rejects_threshold_and_quantile_together() -> None:
     with pytest.raises(InputValidationError, match="not both"):
         tail_mae([1, 2, 3], [1, 2, 3], threshold=1, quantile=0.9)
