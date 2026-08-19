@@ -1,17 +1,29 @@
 """Vectorized predictive-distribution adapters for actuarial models."""
 
 from collections.abc import Callable
+from typing import Any
 
 import numpy as np
 from numpy.typing import ArrayLike
 from scipy import stats
-from tweedie import tweedie as tweedie_family
 
 from acteval.exceptions import InputValidationError
 from acteval.types import NumericArray
 from acteval.validation import as_1d_float_array
 
 RandomState = int | np.random.Generator | None
+
+
+def _tweedie_family(**parameters: Any) -> Any:
+    """Load the optional numerical Tweedie implementation on demand."""
+    try:
+        from tweedie import tweedie
+    except ImportError as error:
+        raise InputValidationError(
+            "Tweedie CDF, density, and entropy require the optional dependency. "
+            "Install it with: pip install 'acteval-insurance[tweedie]'."
+        ) from error
+    return tweedie(**parameters)
 
 
 def _parameter(
@@ -420,7 +432,7 @@ class TweedieDistribution:
     def cdf(self, x: ArrayLike) -> NumericArray:
         values = _observations(x, length=self.n_observations, name="x")
         return np.asarray(
-            tweedie_family(
+            _tweedie_family(
                 p=self.power,
                 mu=self._mean,
                 phi=self.dispersion,
@@ -465,7 +477,7 @@ class TweedieDistribution:
     def log_prob(self, y: ArrayLike) -> NumericArray:
         values = _observations(y, length=self.n_observations, name="y")
         return np.asarray(
-            tweedie_family(
+            _tweedie_family(
                 p=self.power,
                 mu=self._mean,
                 phi=self.dispersion,
@@ -483,7 +495,7 @@ class TweedieDistribution:
         samples = self._approximation()
         result = np.empty(self.n_observations, dtype=np.float64)
         for column in range(self.n_observations):
-            distribution = tweedie_family(
+            distribution = _tweedie_family(
                 p=self.power,
                 mu=self._mean[column],
                 phi=self.dispersion[column],

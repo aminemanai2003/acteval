@@ -5,6 +5,24 @@ import acteval as ae
 from acteval.exceptions import InputValidationError
 
 
+def test_tweedie_optional_dependency_failure_is_actionable(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import builtins
+
+    distribution = ae.TweedieDistribution([1.0], power=1.5, dispersion=[1.0])
+    original_import = builtins.__import__
+
+    def reject_tweedie(name: str, *args: object, **kwargs: object) -> object:
+        if name == "tweedie":
+            raise ImportError("simulated missing optional dependency")
+        return original_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", reject_tweedie)
+    with pytest.raises(InputValidationError, match=r"acteval-insurance\[tweedie\]"):
+        distribution.cdf([1.0])
+
+
 def test_poisson_distribution_vectorized_contract() -> None:
     distribution = ae.PoissonDistribution([1, 3])
     assert distribution.n_observations == 2

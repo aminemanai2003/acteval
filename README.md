@@ -50,6 +50,15 @@ Install the optional plotting support with:
 python -m pip install "acteval-insurance[plot]"
 ```
 
+Numerical CDF, density, and entropy methods on `TweedieDistribution` use an
+optional dependency:
+
+```bash
+python -m pip install "acteval-insurance[tweedie]"
+```
+
+Tweedie deviance itself comes from scikit-learn and does not require this extra.
+
 The distribution name is `acteval-insurance` because `acteval` was already
 occupied on PyPI. The import remains concise:
 
