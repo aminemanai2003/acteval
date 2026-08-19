@@ -67,6 +67,15 @@ occupied on PyPI. The import remains concise:
 import acteval as ae
 ```
 
+The package also installs a command-line interface for CSV prediction files:
+
+```bash
+acteval evaluate predictions.csv --task claim_frequency
+```
+
+Use `acteval evaluate --help` for column, metric, weighting, and report-export
+options.
+
 ## Quick start
 
 ActEval accepts ordinary NumPy-compatible arrays and returns structured result
@@ -333,6 +342,7 @@ result as one evidence artifact rather than a governance decision.
 ## Documentation
 
 - [Documentation website](https://aminemanai2003.github.io/acteval/)
+- [Command-line interface](https://aminemanai2003.github.io/acteval/cli/)
 - [API guide](https://github.com/aminemanai2003/acteval/blob/main/docs/api.md)
 - [Metric reference](https://github.com/aminemanai2003/acteval/blob/main/docs/metric-reference.md)
 - [Bootstrap inference](https://github.com/aminemanai2003/acteval/blob/main/docs/inference.md)

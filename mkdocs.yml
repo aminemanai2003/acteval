@@ -14,6 +14,7 @@ plugins:
 
 nav:
   - Home: index.md
+  - Command-line interface: cli.md
   - API guide: api.md
   - Metric reference: metric-reference.md
   - Bootstrap inference: inference.md

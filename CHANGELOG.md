@@ -4,6 +4,8 @@
 
 ### Correctness and scope corrections
 
+- Added a no-new-dependency command-line interface for evaluating prediction
+  CSV files and exporting CSV, JSON, or standalone HTML reports.
 - Corrected empirical expected-shortfall integration, tied tail selection, and
   tied model ranking.
 - Separated mean- and median-target metrics and removed arbitrary tail and
