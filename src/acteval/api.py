@@ -13,7 +13,7 @@ from acteval.registry import get_metric
 from acteval.reports import ComparisonResult, EvaluationResult
 from acteval.tasks import DEFAULT_METRICS
 from acteval.types import MetricSpec, PredictiveDistribution, Task
-from acteval.validation import validate_inputs, validate_task
+from acteval.validation import validate_input_scale, validate_inputs, validate_task
 
 MetricSelection = str | MetricSpec
 _TAIL_ALIAS = re.compile(r"^(tail_mae|tail_rmse|tail_ae)_(\d+(?:\.\d+)?)$")
@@ -118,6 +118,7 @@ def evaluate(
     *,
     task: str,
     exposure: ArrayLike | None = None,
+    input_scale: str | None = None,
     sample_weight: ArrayLike | None = None,
     metrics: Sequence[MetricSelection] | None = None,
 ) -> EvaluationResult:
@@ -130,6 +131,7 @@ def evaluate(
     in result metadata.
     """
     resolved_task = validate_task(task)
+    resolved_scale = validate_input_scale(input_scale, exposure=exposure)
     validated = validate_inputs(
         y_true,
         y_pred,
@@ -185,7 +187,7 @@ def evaluate(
         "has_exposure": exposure is not None,
         "has_sample_weight": sample_weight is not None,
         "weighting": weighting,
-        "target_scale": "same_scale_nonnegative",
+        "input_scale": resolved_scale,
         "prediction_functional": next(
             iter(prediction_functionals), "ranking_or_diagnostic"
         ),
@@ -200,11 +202,13 @@ def compare(
     *,
     task: str,
     exposure: ArrayLike | None = None,
+    input_scale: str | None = None,
     sample_weight: ArrayLike | None = None,
     metrics: Sequence[MetricSelection] | None = None,
 ) -> ComparisonResult:
     """Evaluate several prediction arrays against the same observations."""
     resolved_task = validate_task(task)
+    resolved_scale = validate_input_scale(input_scale, exposure=exposure)
     if not predictions:
         raise InputValidationError("predictions must contain at least one model.")
     results: dict[str, EvaluationResult] = {}
@@ -221,6 +225,7 @@ def compare(
             prediction,
             task=resolved_task,
             exposure=exposure,
+            input_scale=resolved_scale,
             sample_weight=sample_weight,
             metrics=metrics,
         )
@@ -293,6 +298,7 @@ def evaluate_distribution(
     *,
     task: str,
     exposure: ArrayLike | None = None,
+    input_scale: str | None = None,
     sample_weight: ArrayLike | None = None,
     metrics: Sequence[MetricSelection] | None = None,
 ) -> EvaluationResult:
@@ -304,6 +310,7 @@ def evaluate_distribution(
     measure and they do not share a universal optimization objective.
     """
     resolved_task = validate_task(task)
+    resolved_scale = validate_input_scale(input_scale, exposure=exposure)
     validated = validate_inputs(
         y_true,
         y_true,
@@ -345,6 +352,7 @@ def evaluate_distribution(
             "distribution_type": type(distribution).__name__,
             "has_exposure": exposure is not None,
             "has_sample_weight": sample_weight is not None,
+            "input_scale": resolved_scale,
             "metric_specs": specifications,
             "entropy_is_not_universal_quality": True,
         },
@@ -357,11 +365,13 @@ def compare_distributions(
     *,
     task: str,
     exposure: ArrayLike | None = None,
+    input_scale: str | None = None,
     sample_weight: ArrayLike | None = None,
     metrics: Sequence[MetricSelection] | None = None,
 ) -> ComparisonResult:
     """Compare predictive distributions under identical scoring rules."""
     resolved_task = validate_task(task)
+    resolved_scale = validate_input_scale(input_scale, exposure=exposure)
     if not distributions:
         raise InputValidationError("distributions must contain at least one model.")
     results: dict[str, EvaluationResult] = {}
@@ -378,6 +388,7 @@ def compare_distributions(
             distribution,
             task=resolved_task,
             exposure=exposure,
+            input_scale=resolved_scale,
             sample_weight=sample_weight,
             metrics=metrics,
         )

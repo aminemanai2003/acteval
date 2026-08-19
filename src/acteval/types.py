@@ -8,6 +8,7 @@ import numpy as np
 from numpy.typing import ArrayLike, NDArray
 
 Task = Literal["claim_frequency", "claim_severity", "pure_premium"]
+InputScale = Literal["aggregate", "rate"]
 NumericArray = NDArray[np.float64]
 
 

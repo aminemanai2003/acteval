@@ -4,6 +4,7 @@ import pytest
 from acteval.exceptions import InputValidationError
 from acteval.validation import (
     combine_weights,
+    validate_input_scale,
     validate_inputs,
     validate_n_bins,
     validate_probability,
@@ -56,3 +57,14 @@ def test_task_probability_and_bin_validation() -> None:
         validate_probability(1, name="q")
     with pytest.raises(InputValidationError, match="greater than or equal"):
         validate_n_bins(1)
+
+
+def test_input_scale_contract_rejects_ambiguous_exposure() -> None:
+    assert validate_input_scale(None, exposure=None) == "aggregate"
+    assert validate_input_scale("rate", exposure=[1, 2]) == "rate"
+    with pytest.raises(InputValidationError, match="input_scale='rate'"):
+        validate_input_scale(None, exposure=[1, 2])
+    with pytest.raises(InputValidationError, match="must not be multiplied"):
+        validate_input_scale("aggregate", exposure=[1, 2])
+    with pytest.raises(InputValidationError, match="'aggregate' or 'rate'"):
+        validate_input_scale("unknown", exposure=None)

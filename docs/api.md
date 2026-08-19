@@ -2,12 +2,14 @@
 
 ## High-level functions
 
-### `evaluate(y_true, y_pred, *, task, exposure=None, sample_weight=None, metrics=None)`
+### `evaluate(y_true, y_pred, *, task, exposure=None, input_scale=None, sample_weight=None, metrics=None)`
 
 Returns `EvaluationResult`. With `metrics=None`, ActEval uses task defaults.
 Metrics can be registry names, supported tail aliases, or `MetricSpec` values.
+When `exposure` is supplied, pass `input_scale="rate"`; aggregate counts or
+losses must omit exposure so they are not weighted a second time.
 
-### `compare(y_true, predictions, *, task, exposure=None, sample_weight=None, metrics=None)`
+### `compare(y_true, predictions, *, task, exposure=None, input_scale=None, sample_weight=None, metrics=None)`
 
 `predictions` maps unique model labels to arrays. Returns `ComparisonResult`.
 Every model is evaluated with identical observations, weighting, task, and

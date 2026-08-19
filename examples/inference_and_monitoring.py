@@ -21,6 +21,7 @@ intervals = ae.bootstrap_evaluate(
     candidate,
     task="claim_frequency",
     exposure=exposure,
+    input_scale="rate",
     metrics=["poisson_deviance", "ae_ratio", "normalized_gini"],
     n_resamples=200,
     random_state=42,
@@ -32,6 +33,7 @@ paired = ae.paired_bootstrap_compare(
     task="claim_frequency",
     reference="Current",
     exposure=exposure,
+    input_scale="rate",
     metrics=["poisson_deviance", "ae_ratio"],
     n_resamples=200,
     random_state=42,
@@ -43,6 +45,7 @@ segment_report = ae.evaluate_by_segment(
     segments,
     task="claim_frequency",
     exposure=exposure,
+    input_scale="rate",
     metrics=["poisson_deviance", "ae_ratio"],
 )
 
@@ -52,6 +55,7 @@ timeline = ae.evaluate_over_time(
     periods,
     task="claim_frequency",
     exposure=exposure,
+    input_scale="rate",
     metrics=["poisson_deviance", "ae_ratio"],
 )
 

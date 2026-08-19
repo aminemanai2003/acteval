@@ -73,6 +73,7 @@ result = ae.evaluate(
     y_true,
     y_pred,
     exposure=exposure,
+    input_scale="rate",
     task="claim_frequency",
 )
 
@@ -121,6 +122,7 @@ comparison = ae.compare(
         "Gradient boosting": boosting_predictions,
     },
     exposure=exposure,
+    input_scale="rate",
     task="claim_frequency",
 )
 
@@ -141,6 +143,7 @@ intervals = ae.bootstrap_evaluate(
     y_true,
     y_pred,
     exposure=exposure,
+    input_scale="rate",
     task="claim_frequency",
     metrics=["rmse", "ae_ratio", "normalized_gini", "tail_ae_95"],
     n_resamples=2_000,
@@ -182,6 +185,7 @@ segments = ae.evaluate_by_segment(
     segment_labels,
     task="claim_frequency",
     exposure=exposure,
+    input_scale="rate",
     metrics=["ae_ratio", "normalized_gini", "tail_ae_95"],
 )
 
@@ -191,6 +195,7 @@ timeline = ae.evaluate_over_time(
     accounting_period,
     task="claim_frequency",
     exposure=exposure,
+    input_scale="rate",
     metrics=["poisson_deviance", "ae_ratio"],
 )
 
@@ -224,6 +229,7 @@ distribution_result = ae.evaluate_distribution(
     poisson,
     task="claim_frequency",
     exposure=exposure,
+    input_scale="rate",
     metrics=[
         ae.MetricSpec("crps", {"n_samples": 5_000, "random_state": 42}),
         "log_score",

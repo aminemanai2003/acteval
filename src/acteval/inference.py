@@ -14,7 +14,12 @@ from acteval.metrics import calibration_by_quantile
 from acteval.reports import EvaluationResult
 from acteval.types import NumericArray, Task
 from acteval.utils import risk_bin_indices
-from acteval.validation import combine_weights, validate_inputs, validate_probability
+from acteval.validation import (
+    combine_weights,
+    validate_input_scale,
+    validate_inputs,
+    validate_probability,
+)
 
 BootstrapMethod = Literal["percentile"]
 
@@ -237,6 +242,7 @@ def bootstrap_evaluate(
     *,
     task: str,
     exposure: ArrayLike | None = None,
+    input_scale: str | None = None,
     sample_weight: ArrayLike | None = None,
     metrics: Sequence[MetricSelection] | None = None,
     n_resamples: int = 1_000,
@@ -264,6 +270,7 @@ def bootstrap_evaluate(
         validated.y_pred,
         task=task,
         exposure=validated.exposure,
+        input_scale=input_scale,
         sample_weight=validated.sample_weight,
         metrics=metrics,
     )
@@ -280,6 +287,7 @@ def bootstrap_evaluate(
                 validated.y_pred[indices],
                 task=task,
                 exposure=_slice_optional(validated.exposure, indices),
+                input_scale=input_scale,
                 sample_weight=_slice_optional(validated.sample_weight, indices),
                 metrics=metrics,
             )
@@ -337,6 +345,7 @@ def paired_bootstrap_compare(
     task: str,
     reference: str | None = None,
     exposure: ArrayLike | None = None,
+    input_scale: str | None = None,
     sample_weight: ArrayLike | None = None,
     metrics: Sequence[MetricSelection] | None = None,
     n_resamples: int = 1_000,
@@ -356,6 +365,7 @@ def paired_bootstrap_compare(
         predictions,
         task=task,
         exposure=exposure,
+        input_scale=input_scale,
         sample_weight=sample_weight,
         metrics=metrics,
     )
@@ -405,6 +415,7 @@ def paired_bootstrap_compare(
                 },
                 task=task,
                 exposure=_slice_optional(baseline_inputs.exposure, indices),
+                input_scale=input_scale,
                 sample_weight=_slice_optional(baseline_inputs.sample_weight, indices),
                 metrics=metrics,
             )
@@ -487,6 +498,7 @@ def bootstrap_calibration_by_quantile(
     *,
     n_bins: int = 10,
     exposure: ArrayLike | None = None,
+    input_scale: str | None = None,
     sample_weight: ArrayLike | None = None,
     n_resamples: int = 1_000,
     confidence_level: float = 0.95,
@@ -500,6 +512,7 @@ def bootstrap_calibration_by_quantile(
     """
 
     count, confidence = _validate_bootstrap(n_resamples, confidence_level)
+    resolved_scale = validate_input_scale(input_scale, exposure=exposure)
     validated = validate_inputs(
         y_true,
         y_pred,
@@ -584,6 +597,7 @@ def bootstrap_calibration_by_quantile(
         {
             "method": "fixed_bin_stratified_percentile_bootstrap",
             "random_state": random_state,
+            "input_scale": resolved_scale,
             "attempts": total_attempts,
             "failed_resamples": total_attempts - count * len(result_bins),
             "zero_effective_weight_rows_excluded": True,

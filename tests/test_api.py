@@ -21,6 +21,7 @@ def test_evaluate_default_frequency_milestone(
         observed,
         predicted,
         exposure=exposure,
+        input_scale="rate",
         task="claim_frequency",
     )
     assert set(result.metrics) == {
@@ -93,6 +94,7 @@ def test_compare_initial_milestone_and_rank(
         observed,
         {"Model A": predicted, "Model B": predicted * 1.1},
         exposure=exposure,
+        input_scale="rate",
         task="claim_frequency",
     )
     frame = comparison.to_dataframe()
@@ -147,6 +149,35 @@ def test_evaluate_rejects_unsupported_and_duplicate_metrics() -> None:
 def test_compare_rejects_empty_predictions() -> None:
     with pytest.raises(InputValidationError, match="at least one model"):
         ae.compare([1, 2], {}, task="claim_frequency")
+
+
+def test_high_level_api_requires_explicit_rate_scale_with_exposure() -> None:
+    with pytest.raises(InputValidationError, match="input_scale='rate'"):
+        ae.evaluate(
+            [1, 2],
+            [1, 2],
+            task="claim_frequency",
+            exposure=[1, 2],
+            metrics=["rmse"],
+        )
+    with pytest.raises(InputValidationError, match="must not be multiplied"):
+        ae.evaluate(
+            [1, 2],
+            [1, 2],
+            task="claim_frequency",
+            exposure=[1, 2],
+            input_scale="aggregate",
+            metrics=["rmse"],
+        )
+    result = ae.evaluate(
+        [1, 2],
+        [1, 2],
+        task="claim_frequency",
+        exposure=[1, 2],
+        input_scale="rate",
+        metrics=["rmse"],
+    )
+    assert result.metadata["input_scale"] == "rate"
 
 
 def test_public_api_exports_are_resolvable_and_version_is_stable() -> None:

@@ -7,7 +7,7 @@ import numpy as np
 from numpy.typing import ArrayLike
 
 from acteval.exceptions import InputValidationError
-from acteval.types import NumericArray, Task
+from acteval.types import InputScale, NumericArray, Task
 
 Domain = Literal["real", "nonnegative", "positive"]
 VALID_TASKS: tuple[Task, ...] = (
@@ -126,6 +126,31 @@ def validate_task(task: str) -> Task:
             f"Unknown task {task!r}. Expected one of: {choices}."
         )
     return normalized
+
+
+def validate_input_scale(
+    input_scale: str | None,
+    *,
+    exposure: ArrayLike | None,
+) -> InputScale:
+    """Resolve the scale contract and prevent count/rate ambiguity."""
+    if input_scale is None:
+        if exposure is not None:
+            raise InputValidationError(
+                "input_scale='rate' is required when exposure is supplied."
+            )
+        return "aggregate"
+    normalized = input_scale.strip().lower()
+    if normalized not in {"aggregate", "rate"}:
+        raise InputValidationError("input_scale must be 'aggregate' or 'rate'.")
+    if normalized == "aggregate" and exposure is not None:
+        raise InputValidationError(
+            "Aggregate inputs must not be multiplied by exposure; convert them "
+            "to rates or omit exposure."
+        )
+    if normalized == "rate":
+        return "rate"
+    return "aggregate"
 
 
 def validate_probability(value: float, *, name: str) -> float:
