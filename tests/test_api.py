@@ -29,16 +29,11 @@ def test_evaluate_default_frequency_milestone(
         "poisson_deviance",
         "ae_ratio",
         "normalized_gini",
-        "tail_mae_95",
-        "tail_ae_95",
     }
     assert result.metadata["weighting"] == "exposure"
     assert result.metadata["prediction_functional"] == "mean"
-    assert result.metadata["metric_specs"]["tail_mae_95"]["parameters"] == {
-        "quantile": 0.95
-    }
     assert "rmse" in result.summary()
-    assert result.to_dataframe().shape == (6, 5)
+    assert result.to_dataframe().shape == (4, 5)
     assert result.to_dict()["task"] == "claim_frequency"
 
 
@@ -59,13 +54,22 @@ def test_evaluate_parameterized_metrics_and_alias(
     assert set(result.metrics) == {"rmse", "tail_ae_90", "tail_mae_80"}
 
 
-def test_evaluate_pure_premium_records_tweedie_power(
+def test_explicit_pure_premium_tweedie_records_power(
     frequency_data: tuple[np.ndarray, np.ndarray, np.ndarray],
 ) -> None:
     observed, predicted, _ = frequency_data
-    result = ae.evaluate(observed, predicted, task="pure_premium")
-    details = result.metadata["metric_specs"]["tweedie_deviance_p1_5"]
-    assert details["parameters"] == {"power": 1.5}
+    result = ae.evaluate(
+        observed,
+        predicted,
+        task="pure_premium",
+        metrics=[
+            ae.MetricSpec(
+                "tweedie_deviance", {"power": 1.7}, label="tweedie_deviance_p1_7"
+            )
+        ],
+    )
+    details = result.metadata["metric_specs"]["tweedie_deviance_p1_7"]
+    assert details["parameters"] == {"power": 1.7}
 
 
 def test_point_evaluation_rejects_mixed_prediction_functionals() -> None:
@@ -98,7 +102,7 @@ def test_compare_initial_milestone_and_rank(
         task="claim_frequency",
     )
     frame = comparison.to_dataframe()
-    assert frame.shape == (6, 2)
+    assert frame.shape == (4, 2)
     expected_best = frame.loc["rmse"].idxmin()
     assert comparison.rank("rmse").iloc[0]["model"] == expected_best
     assert comparison.rank("ae_ratio").iloc[0]["model"] in {
@@ -124,11 +128,12 @@ def test_identical_models_produce_identical_metrics(
     assert ranking.loc[ranking["model"] == "B", "rank"].item() == 1
 
 
-def test_default_frequency_evaluation_supports_tied_maximum_counts() -> None:
+def test_explicit_tail_evaluation_supports_tied_maximum_counts() -> None:
     result = ae.evaluate(
         [0, 0, 1, 1],
         [0.1, 0.2, 0.8, 0.9],
         task="claim_frequency",
+        metrics=["tail_mae_95"],
     )
     assert result.metrics["tail_mae_95"] == pytest.approx(0.15)
 

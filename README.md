@@ -80,7 +80,8 @@ result = ae.evaluate(
 print(result.to_dataframe())
 ```
 
-Task defaults provide a balanced report. Metrics can be selected explicitly:
+Task defaults avoid making portfolio-specific tail thresholds or Tweedie-power
+assumptions. Select those metrics explicitly and record their parameters:
 
 ```python
 result = ae.evaluate(
