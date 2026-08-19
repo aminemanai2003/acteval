@@ -17,7 +17,6 @@ DEFAULT_METRICS: Final[dict[Task, tuple[MetricSpec, ...]]] = {
         _TAIL_AE_95,
     ),
     "claim_severity": (
-        MetricSpec("mae"),
         MetricSpec("rmse"),
         MetricSpec("gamma_deviance"),
         MetricSpec("ae_ratio"),
@@ -26,7 +25,6 @@ DEFAULT_METRICS: Final[dict[Task, tuple[MetricSpec, ...]]] = {
         _TAIL_AE_95,
     ),
     "pure_premium": (
-        MetricSpec("mae"),
         MetricSpec("rmse"),
         MetricSpec(
             "tweedie_deviance",

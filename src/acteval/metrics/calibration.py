@@ -16,6 +16,7 @@ from acteval.validation import combine_weights, validate_inputs
     category="calibration",
     higher_is_better=None,
     target=1.0,
+    prediction_functional="mean",
     description="Aggregate actual-to-expected ratio; the calibration target is 1.",
 )
 def ae_ratio(
@@ -122,6 +123,7 @@ def calibration_by_quantile(
     tasks=("claim_frequency", "claim_severity", "pure_premium"),
     category="calibration",
     higher_is_better=False,
+    prediction_functional="mean",
     description="Risk-bin weighted absolute observed-versus-expected difference.",
 )
 def weighted_calibration_error(

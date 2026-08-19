@@ -15,6 +15,7 @@ MetricCategory = Literal[
     "uncertainty",
     "tail_risk",
 ]
+PredictionFunctional = Literal["mean", "median"]
 MetricFunction = Callable[..., float]
 F = TypeVar("F", bound=MetricFunction)
 
@@ -28,6 +29,7 @@ class MetricDefinition:
     supported_tasks: tuple[Task, ...]
     higher_is_better: bool | None
     target: float | None
+    prediction_functional: PredictionFunctional | None
     requires_distribution: bool
     description: str
     reference: str | None
@@ -51,6 +53,7 @@ def register_metric(
     requires_distribution: bool = False,
     reference: str | None = None,
     target: float | None = None,
+    prediction_functional: PredictionFunctional | None = None,
 ) -> Callable[[F], F]:
     """Register a metric function and its evaluation metadata."""
     normalized_name = name.strip().lower()
@@ -73,6 +76,7 @@ def register_metric(
             supported_tasks=supported_tasks,
             higher_is_better=higher_is_better,
             target=target,
+            prediction_functional=prediction_functional,
             requires_distribution=requires_distribution,
             description=description,
             reference=reference,

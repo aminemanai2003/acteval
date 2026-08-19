@@ -18,6 +18,7 @@ from acteval.validation.inputs import Domain
     tasks=("claim_frequency",),
     category="accuracy",
     higher_is_better=False,
+    prediction_functional="mean",
     description="Mean Poisson deviance for nonnegative outcomes.",
     reference="https://scikit-learn.org/stable/modules/model_evaluation.html#mean-poisson-gamma-and-tweedie-deviances",
 )
@@ -57,6 +58,7 @@ def poisson_deviance(
     tasks=("claim_severity",),
     category="accuracy",
     higher_is_better=False,
+    prediction_functional="mean",
     description="Mean Gamma deviance for strictly positive outcomes.",
     reference="https://scikit-learn.org/stable/modules/model_evaluation.html#mean-poisson-gamma-and-tweedie-deviances",
 )
@@ -95,6 +97,7 @@ def gamma_deviance(
     tasks=("pure_premium",),
     category="accuracy",
     higher_is_better=False,
+    prediction_functional="mean",
     description="Mean Tweedie deviance with an explicit variance power.",
     reference="https://scikit-learn.org/stable/modules/model_evaluation.html#mean-poisson-gamma-and-tweedie-deviances",
 )

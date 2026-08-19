@@ -19,6 +19,7 @@ _ALL_TASKS: tuple[Task, ...] = (
     tasks=_ALL_TASKS,
     category="accuracy",
     higher_is_better=False,
+    prediction_functional="median",
     description="Mean absolute error, optionally weighted.",
 )
 def mae(
@@ -28,12 +29,13 @@ def mae(
     sample_weight: ArrayLike | None = None,
     exposure: ArrayLike | None = None,
 ) -> float:
-    """Compute mean absolute error.
+    """Compute mean absolute error for median predictions.
 
     MAE is the (optionally weighted) arithmetic mean of
     ``abs(y_true - y_pred)``. It has the same unit as the target and is less
-    sensitive to large errors than RMSE. It does not measure calibration or
-    discrimination.
+    sensitive to large errors than RMSE. As a model-comparison score, MAE
+    elicits a conditional median rather than a conditional mean. It does not
+    measure calibration or discrimination.
     """
     inputs = validate_inputs(
         y_true,
@@ -50,6 +52,7 @@ def mae(
     tasks=_ALL_TASKS,
     category="accuracy",
     higher_is_better=False,
+    prediction_functional="mean",
     description="Root mean squared error, optionally weighted.",
 )
 def rmse(
@@ -59,7 +62,7 @@ def rmse(
     sample_weight: ArrayLike | None = None,
     exposure: ArrayLike | None = None,
 ) -> float:
-    """Compute root mean squared error.
+    """Compute root mean squared error for mean predictions.
 
     RMSE is the square root of the (optionally weighted) mean squared error.
     It has the same unit as the target and emphasizes larger errors. It does

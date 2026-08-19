@@ -32,6 +32,7 @@ def test_evaluate_default_frequency_milestone(
         "tail_ae_95",
     }
     assert result.metadata["weighting"] == "exposure"
+    assert result.metadata["prediction_functional"] == "mean"
     assert result.metadata["metric_specs"]["tail_mae_95"]["parameters"] == {
         "quantile": 0.95
     }
@@ -64,6 +65,24 @@ def test_evaluate_pure_premium_records_tweedie_power(
     result = ae.evaluate(observed, predicted, task="pure_premium")
     details = result.metadata["metric_specs"]["tweedie_deviance_p1_5"]
     assert details["parameters"] == {"power": 1.5}
+
+
+def test_point_evaluation_rejects_mixed_prediction_functionals() -> None:
+    with pytest.raises(InputValidationError, match="incompatible prediction"):
+        ae.evaluate(
+            [1, 1, 1, 101],
+            [26, 26, 26, 26],
+            task="claim_severity",
+            metrics=["mae", "rmse"],
+        )
+
+    median_result = ae.evaluate(
+        [1, 1, 1, 101],
+        [1, 1, 1, 1],
+        task="claim_severity",
+        metrics=["mae"],
+    )
+    assert median_result.metadata["prediction_functional"] == "median"
 
 
 def test_compare_initial_milestone_and_rank(

@@ -105,6 +105,7 @@ def _evaluate_metric(
         "category": definition.category,
         "higher_is_better": definition.higher_is_better,
         "target": definition.target,
+        "prediction_functional": definition.prediction_functional,
         "parameters": dict(specification.parameters),
         "reference": definition.reference,
     }
@@ -144,6 +145,18 @@ def evaluate(
     )
     if not selections:
         raise InputValidationError("metrics must contain at least one metric.")
+    prediction_functionals = {
+        definition.prediction_functional
+        for specification in selections
+        if (definition := get_metric(specification.name)).prediction_functional
+        is not None
+    }
+    if len(prediction_functionals) > 1:
+        names = ", ".join(sorted(prediction_functionals))
+        raise InputValidationError(
+            "Selected metrics evaluate incompatible prediction functionals: "
+            f"{names}. Evaluate mean and median predictions separately."
+        )
     values: dict[str, float] = {}
     specifications: dict[str, dict[str, Any]] = {}
     for specification in selections:
@@ -173,6 +186,9 @@ def evaluate(
         "has_sample_weight": sample_weight is not None,
         "weighting": weighting,
         "target_scale": "same_scale_nonnegative",
+        "prediction_functional": next(
+            iter(prediction_functionals), "ranking_or_diagnostic"
+        ),
         "metric_specs": specifications,
     }
     return EvaluationResult(resolved_task, values, result_metadata)
@@ -263,6 +279,7 @@ def _evaluate_distribution_metric(
             "category": definition.category,
             "higher_is_better": definition.higher_is_better,
             "target": definition.target,
+            "prediction_functional": definition.prediction_functional,
             "parameters": dict(specification.parameters),
             "reference": definition.reference,
             "requires_distribution": True,
