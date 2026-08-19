@@ -31,6 +31,9 @@ dependencies = [
   "scipy>=1.11",
 ]
 
+[project.scripts]
+acteval = "acteval.cli:main"
+
 [project.optional-dependencies]
 docs = ["mkdocs>=1.6,<2"]
 plot = ["matplotlib>=3.8"]
