@@ -230,3 +230,39 @@ def test_results_and_metric_specs_are_deeply_immutable_and_detached() -> None:
     detached = result.to_dict()
     detached["metadata"]["metric_specs"]["rmse"]["parameters"]["changed"] = True
     assert "changed" not in result.metadata["metric_specs"]["rmse"]["parameters"]
+
+
+def test_evaluation_records_versions_input_identity_and_caller_context() -> None:
+    first = ae.evaluate(
+        [1, 2, 3],
+        [1, 2, 2.5],
+        task="claim_frequency",
+        metrics=["rmse"],
+        context={"model_id": "glm-v4", "split_seed": 42, "split": "holdout"},
+    )
+    repeated = ae.evaluate(
+        [1, 2, 3],
+        [1, 2, 2.5],
+        task="claim_frequency",
+        metrics=["rmse"],
+    )
+    changed = ae.evaluate(
+        [1, 2, 3],
+        [1, 2, 2.6],
+        task="claim_frequency",
+        metrics=["rmse"],
+    )
+    assert first.metadata["acteval_version"] == ae.__version__
+    assert first.metadata["python_version"]
+    assert first.metadata["dependency_versions"]["numpy"]
+    assert first.metadata["evaluation_context"]["model_id"] == "glm-v4"
+    assert first.metadata["input_fingerprint"] == repeated.metadata["input_fingerprint"]
+    assert first.metadata["input_fingerprint"] != changed.metadata["input_fingerprint"]
+    with pytest.raises(InputValidationError, match="context keys"):
+        ae.evaluate(
+            [1, 2],
+            [1, 2],
+            task="claim_frequency",
+            metrics=["rmse"],
+            context={"": "invalid"},
+        )

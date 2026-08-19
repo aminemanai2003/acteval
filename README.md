@@ -75,6 +75,7 @@ result = ae.evaluate(
     exposure=exposure,
     input_scale="rate",
     task="claim_frequency",
+    context={"model_id": "frequency-glm-v4", "split": "holdout", "split_seed": 42},
 )
 
 print(result.to_dataframe())

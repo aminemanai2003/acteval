@@ -8,6 +8,11 @@ from typing import Any
 
 from numpy.typing import ArrayLike
 
+from acteval.evaluation_metadata import (
+    input_fingerprint,
+    runtime_metadata,
+    validate_context,
+)
 from acteval.exceptions import InputValidationError
 from acteval.registry import get_metric
 from acteval.reports import ComparisonResult, EvaluationResult
@@ -121,6 +126,7 @@ def evaluate(
     input_scale: str | None = None,
     sample_weight: ArrayLike | None = None,
     metrics: Sequence[MetricSelection] | None = None,
+    context: Mapping[str, Any] | None = None,
 ) -> EvaluationResult:
     """Evaluate one prediction array for an actuarial task.
 
@@ -183,6 +189,7 @@ def evaluate(
     else:
         weighting = "uniform"
     result_metadata = {
+        **runtime_metadata(),
         "n_observations": len(validated.y_true),
         "has_exposure": exposure is not None,
         "has_sample_weight": sample_weight is not None,
@@ -192,6 +199,19 @@ def evaluate(
             iter(prediction_functionals), "ranking_or_diagnostic"
         ),
         "metric_specs": specifications,
+        "input_fingerprint": input_fingerprint(
+            y_true=validated.y_true,
+            y_pred=validated.y_pred,
+            exposure=validated.exposure,
+            sample_weight=validated.sample_weight,
+        ),
+        "input_fingerprint_scope": (
+            "y_true",
+            "y_pred",
+            "exposure",
+            "sample_weight",
+        ),
+        "evaluation_context": validate_context(context),
     }
     return EvaluationResult(resolved_task, values, result_metadata)
 
@@ -205,6 +225,7 @@ def compare(
     input_scale: str | None = None,
     sample_weight: ArrayLike | None = None,
     metrics: Sequence[MetricSelection] | None = None,
+    context: Mapping[str, Any] | None = None,
 ) -> ComparisonResult:
     """Evaluate several prediction arrays against the same observations."""
     resolved_task = validate_task(task)
@@ -228,14 +249,17 @@ def compare(
             input_scale=resolved_scale,
             sample_weight=sample_weight,
             metrics=metrics,
+            context=context,
         )
     return ComparisonResult(
         resolved_task,
         results,
         {
+            **runtime_metadata(),
             "models": tuple(results),
             "n_models": len(results),
             "no_universal_best_model": True,
+            "evaluation_context": validate_context(context),
         },
     )
 
@@ -301,6 +325,7 @@ def evaluate_distribution(
     input_scale: str | None = None,
     sample_weight: ArrayLike | None = None,
     metrics: Sequence[MetricSelection] | None = None,
+    context: Mapping[str, Any] | None = None,
 ) -> EvaluationResult:
     """Evaluate one predictive distribution per observation.
 
@@ -348,6 +373,7 @@ def evaluate_distribution(
         resolved_task,
         values,
         {
+            **runtime_metadata(),
             "n_observations": len(validated.y_true),
             "distribution_type": type(distribution).__name__,
             "has_exposure": exposure is not None,
@@ -355,6 +381,21 @@ def evaluate_distribution(
             "input_scale": resolved_scale,
             "metric_specs": specifications,
             "entropy_is_not_universal_quality": True,
+            "input_fingerprint": input_fingerprint(
+                y_true=validated.y_true,
+                distribution_mean=distribution.mean(),
+                distribution_variance=distribution.variance(),
+                exposure=validated.exposure,
+                sample_weight=validated.sample_weight,
+            ),
+            "input_fingerprint_scope": (
+                "y_true",
+                "distribution_mean",
+                "distribution_variance",
+                "exposure",
+                "sample_weight",
+            ),
+            "evaluation_context": validate_context(context),
         },
     )
 
@@ -368,6 +409,7 @@ def compare_distributions(
     input_scale: str | None = None,
     sample_weight: ArrayLike | None = None,
     metrics: Sequence[MetricSelection] | None = None,
+    context: Mapping[str, Any] | None = None,
 ) -> ComparisonResult:
     """Compare predictive distributions under identical scoring rules."""
     resolved_task = validate_task(task)
@@ -391,14 +433,17 @@ def compare_distributions(
             input_scale=resolved_scale,
             sample_weight=sample_weight,
             metrics=metrics,
+            context=context,
         )
     return ComparisonResult(
         resolved_task,
         results,
         {
+            **runtime_metadata(),
             "models": tuple(results),
             "n_models": len(results),
             "distribution_comparison": True,
             "no_universal_best_model": True,
+            "evaluation_context": validate_context(context),
         },
     )

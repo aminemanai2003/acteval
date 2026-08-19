@@ -245,6 +245,7 @@ def bootstrap_evaluate(
     input_scale: str | None = None,
     sample_weight: ArrayLike | None = None,
     metrics: Sequence[MetricSelection] | None = None,
+    context: Mapping[str, Any] | None = None,
     n_resamples: int = 1_000,
     confidence_level: float = 0.95,
     random_state: int | None = 0,
@@ -274,6 +275,7 @@ def bootstrap_evaluate(
         input_scale=input_scale,
         sample_weight=validated.sample_weight,
         metrics=metrics,
+        context=context,
     )
     metric_samples: dict[str, list[float]] = {metric: [] for metric in point.metrics}
     generator = np.random.default_rng(random_state)
@@ -288,6 +290,7 @@ def bootstrap_evaluate(
                 input_scale=input_scale,
                 sample_weight=_slice_optional(validated.sample_weight, indices),
                 metrics=metrics,
+                context=context,
             )
         except ActEvalError as error:
             raise InputValidationError(
@@ -347,6 +350,7 @@ def paired_bootstrap_compare(
     input_scale: str | None = None,
     sample_weight: ArrayLike | None = None,
     metrics: Sequence[MetricSelection] | None = None,
+    context: Mapping[str, Any] | None = None,
     n_resamples: int = 1_000,
     confidence_level: float = 0.95,
     random_state: int | None = 0,
@@ -367,6 +371,7 @@ def paired_bootstrap_compare(
         input_scale=input_scale,
         sample_weight=sample_weight,
         metrics=metrics,
+        context=context,
     )
     model_names = tuple(point.results)
     if reference is not None and (
@@ -414,6 +419,7 @@ def paired_bootstrap_compare(
                 input_scale=input_scale,
                 sample_weight=_slice_optional(baseline_inputs.sample_weight, indices),
                 metrics=metrics,
+                context=context,
             )
         except ActEvalError as error:
             raise InputValidationError(

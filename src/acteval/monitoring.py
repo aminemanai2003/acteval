@@ -252,6 +252,7 @@ def evaluate_by_segment(
     input_scale: str | None = None,
     sample_weight: ArrayLike | None = None,
     metrics: Sequence[MetricSelection] | None = None,
+    context: Mapping[str, Any] | None = None,
     min_observations: int = 2,
 ) -> SegmentEvaluationResult:
     """Evaluate one model separately within each portfolio segment."""
@@ -280,6 +281,7 @@ def evaluate_by_segment(
             input_scale=input_scale,
             sample_weight=_slice(validated.sample_weight, mask),
             metrics=metrics,
+            context=context,
         )
     if not results:
         raise InputValidationError("No segment meets min_observations.")
@@ -305,6 +307,7 @@ def compare_by_segment(
     input_scale: str | None = None,
     sample_weight: ArrayLike | None = None,
     metrics: Sequence[MetricSelection] | None = None,
+    context: Mapping[str, Any] | None = None,
     min_observations: int = 2,
 ) -> SegmentComparisonResult:
     """Compare models within each portfolio segment using identical rows."""
@@ -336,6 +339,7 @@ def compare_by_segment(
             input_scale=input_scale,
             sample_weight=_slice(validated.sample_weight, mask),
             metrics=metrics,
+            context=context,
         )
     if not results:
         raise InputValidationError("No segment meets min_observations.")
@@ -362,6 +366,7 @@ def evaluate_over_time(
     input_scale: str | None = None,
     sample_weight: ArrayLike | None = None,
     metrics: Sequence[MetricSelection] | None = None,
+    context: Mapping[str, Any] | None = None,
     min_observations: int = 2,
 ) -> TemporalEvaluationResult:
     """Evaluate chronologically sorted periods and changes from the first period.
@@ -379,6 +384,7 @@ def evaluate_over_time(
         input_scale=input_scale,
         sample_weight=sample_weight,
         metrics=metrics,
+        context=context,
         min_observations=min_observations,
     )
     ordered = dict(sorted(segmented.segments.items()))
