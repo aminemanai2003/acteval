@@ -1,9 +1,24 @@
+import importlib.util
+import sys
 from pathlib import Path
+from types import ModuleType
 
 import pandas as pd
 import pytest
 
-import space.acteval_space as demo
+
+def _load_space_module() -> ModuleType:
+    path = Path(__file__).parents[1] / "space" / "acteval_space.py"
+    specification = importlib.util.spec_from_file_location("acteval_space_test", path)
+    assert specification is not None
+    assert specification.loader is not None
+    module = importlib.util.module_from_spec(specification)
+    sys.modules[specification.name] = module
+    specification.loader.exec_module(module)
+    return module
+
+
+demo = _load_space_module()
 
 
 @pytest.fixture
