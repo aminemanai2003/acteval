@@ -1,0 +1,74 @@
+name: Hugging Face Space
+
+on:
+  workflow_dispatch:
+    inputs:
+      space_id:
+        description: Hugging Face Space in owner/name form
+        required: true
+        default: aminemanai2003/acteval
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hugging-face-space
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: hugging-face-space
+      url: https://huggingface.co/spaces/${{ inputs.space_id }}
+    runs-on: ubuntu-latest
+    env:
+      HF_SPACE_ID: ${{ inputs.space_id }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: space/requirements.txt
+      - name: Validate deployment configuration
+        shell: bash
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          if [[ ! "$HF_SPACE_ID" =~ ^[A-Za-z0-9][A-Za-z0-9._-]*/[A-Za-z0-9][A-Za-z0-9._-]*$ ]]; then
+            echo "space_id must use owner/name form" >&2
+            exit 1
+          fi
+          if [[ -z "$HF_TOKEN" ]]; then
+            echo "Configure the HF_TOKEN environment secret before deploying" >&2
+            exit 1
+          fi
+      - name: Install the declared Space runtime
+        run: >-
+          python -m pip install
+          "huggingface-hub==1.28.0"
+          "gradio==6.25.0"
+          -r space/requirements.txt
+      - name: Smoke-test the Space bundle
+        working-directory: space
+        run: >-
+          python -c
+          "import app; profile = app.profile_upload('sample_predictions.csv');
+          assert profile.rows == 24; assert app.demo"
+      - name: Create or reuse the public Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: >-
+          hf repos create "$HF_SPACE_ID"
+          --repo-type space
+          --space-sdk gradio
+          --public
+          --exist-ok
+      - name: Upload the versioned Space bundle
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: >-
+          hf upload "$HF_SPACE_ID" space .
+          --repo-type space
+          --commit-message "Deploy ActEval Space from ${GITHUB_SHA}"

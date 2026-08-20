@@ -86,6 +86,19 @@ docker run --rm ghcr.io/aminemanai2003/acteval:latest --version
 See the [container guide](https://aminemanai2003.github.io/acteval/container/)
 for CSV mounts, report output, image tags, and provenance verification.
 
+The repository also includes a deployable Gradio workbench for evaluating a
+prediction CSV in the browser. It provides task-aware column mapping, metric
+tables, weighted calibration bands, and downloadable standalone reports:
+
+```bash
+python -m pip install "gradio==6.25.0"
+cd space
+python app.py
+```
+
+See the [interactive demo guide](https://aminemanai2003.github.io/acteval/interactive-demo/)
+for its data limits, privacy boundary, and Hugging Face deployment workflow.
+
 ## Quick start
 
 ActEval accepts ordinary NumPy-compatible arrays and returns structured result
@@ -354,6 +367,7 @@ result as one evidence artifact rather than a governance decision.
 - [Documentation website](https://aminemanai2003.github.io/acteval/)
 - [Command-line interface](https://aminemanai2003.github.io/acteval/cli/)
 - [Docker image](https://aminemanai2003.github.io/acteval/container/)
+- [Interactive demo](https://aminemanai2003.github.io/acteval/interactive-demo/)
 - [API guide](https://github.com/aminemanai2003/acteval/blob/main/docs/api.md)
 - [Metric reference](https://github.com/aminemanai2003/acteval/blob/main/docs/metric-reference.md)
 - [Bootstrap inference](https://github.com/aminemanai2003/acteval/blob/main/docs/inference.md)

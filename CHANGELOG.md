@@ -4,6 +4,8 @@
 
 - Added a non-root, multi-platform ActEval CLI image published to GitHub
   Container Registry with SBOM and signed provenance attestations.
+- Added a bounded Gradio workbench and a manual deployment workflow for a
+  public Hugging Face Space.
 
 ## 2.0.0 - 2026-08-19
 
