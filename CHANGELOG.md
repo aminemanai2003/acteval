@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Added a non-root, multi-platform ActEval CLI image published to GitHub
+  Container Registry with SBOM and signed provenance attestations.
+
 ## 2.0.0 - 2026-08-19
 
 ### Correctness and scope corrections
